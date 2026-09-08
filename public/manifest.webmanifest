@@ -1,0 +1,23 @@
+{
+  "name": "Jordy Tamayo — Abogado",
+  "short_name": "Jordy Tamayo",
+  "description": "Servicios legales, vitrina jurídica y contacto directo con el Abg. Jordy Tamayo.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#11100e",
+  "theme_color": "#11100e",
+  "lang": "es-EC",
+  "categories": ["business", "legal", "professional"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Habla con el Abg.", "short_name": "Contacto", "url": "/contacto", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Vitrina legal", "short_name": "Vitrina", "url": "/vitrina-legal", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

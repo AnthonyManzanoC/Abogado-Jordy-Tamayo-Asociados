@@ -1,0 +1,6 @@
+@JordyTamayo.Api_HostAddress = http://localhost:5116
+
+GET {{JordyTamayo.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
