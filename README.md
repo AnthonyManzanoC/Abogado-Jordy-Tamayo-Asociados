@@ -53,7 +53,39 @@ La API aplica automáticamente las migraciones pendientes y crea el contenido in
 - El botón **Habla con el Abg.** aparece en todo el sitio y abre WhatsApp con un mensaje preparado.
 - El número utilizado por el botón se configura desde `/admin`, en **Contacto y canales**.
 
-Antes de desplegar, cambie `ADMIN_PASSWORD`, `JWT_SECRET` y configure las variables equivalentes en Vercel/Render.
+Antes de desplegar, use credenciales propias y mantenga `DATABASE_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` y `JWT_SECRET` exclusivamente en el backend de Render. El frontend solo necesita la URL pública de la API.
+
+## Frontend en Vercel
+
+El frontend usa Vinext, no el compilador de Next.js. La compilación de Vercel usa Nitro para generar las funciones de servidor, las rutas y los archivos públicos en `.vercel/output`; no es una web Vite estática con un `dist/index.html`.
+
+`vercel.json` fija la configuración del despliegue desde Git:
+
+- Raíz del proyecto: raíz del repositorio (`./`).
+- Framework: `Vite` (no seleccionar `Next.js`).
+- Instalación: `npm ci`.
+- Compilación: `npm run build:vercel`.
+- Salida: `.vercel/output`, en formato Build Output API de Vercel, con `config.json`, `functions` y `static`.
+
+En Vercel, configure para Production y Preview:
+
+```env
+NEXT_PUBLIC_API_URL=https://api-jordy-tamayo.onrender.com
+```
+
+Esta variable se incorpora durante la compilación; después de cambiarla es necesario un nuevo despliegue. La aplicación elimina espacios externos y barras finales para evitar rutas `//api/...`. No copie secretos de PostgreSQL ni del administrador a las variables del frontend.
+
+Las compilaciones habituales `npm run build` y el desarrollo local conservan el flujo de Sites/Cloudflare. `npm run build:vercel` selecciona explícitamente la integración para Vercel. No se modifican los estilos ni los componentes visuales.
+
+Validación antes de publicar:
+
+```powershell
+npm run build:vercel
+npm run check:vercel
+dotnet run --project backend/tests/DeploymentChecks/DeploymentChecks.csproj
+```
+
+Estas pruebas verifican el servidor generado, siete rutas, navegación RSC, archivos de la PWA, normalización de la URL y permisos CORS. No escriben en la base de datos. Referencias: [Vinext con Nitro](https://github.com/cloudflare/vinext#other-platforms-via-nitro) y [Build Output API](https://vercel.com/docs/build-output-api).
 
 ## API en Render con Docker
 
@@ -90,4 +122,4 @@ docker run --rm -p 8080:8080 --env-file .env.local jordy-tamayo-api
 
 La ejecución requiere acceso a PostgreSQL y aplica las migraciones pendientes al arrancar. No use una base de producción para pruebas de arranque. Compruebe después `http://localhost:8080/api/health`.
 
-Este cambio prepara la API para Render; no despliega el frontend. La política CORS actual permite solo `localhost` y `127.0.0.1`: antes de conectar un frontend público será necesario permitir su dominio HTTPS y configurar la URL pública de la API en el frontend.
+La política CORS permite el dominio exacto `https://abogado-jordy-tamayo-asociados.vercel.app`, además de `localhost` y `127.0.0.1`. Los dominios adicionales se configuran en Render con `Cors__AllowedOrigins__1`, `Cors__AllowedOrigins__2`, etc., usando el origen HTTPS sin rutas. No se permite de forma general cualquier dominio `*.vercel.app`; cada preview o dominio propio debe autorizarse explícitamente. Después de modificar la política debe desplegarse también la API.

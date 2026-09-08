@@ -3,6 +3,8 @@ import tailwindcss from '@tailwindcss/postcss';
 import vinext from 'vinext';
 import { defineConfig } from 'vite';
 import hostingConfig from './.openai/hosting.json';
+import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
 
 const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
   '00000000-0000-4000-8000-000000000000';
@@ -34,7 +36,27 @@ const localBindingConfig = {
     : [],
 };
 
-export default defineConfig(async () => {
+export default defineConfig(async ({ mode }) => {
+  // Keep the local/Sites workflow while producing Vercel's serverless output
+  // explicitly for its build, instead of publishing a Cloudflare Worker as HTML.
+  if (mode === 'vercel' || process.env.VERCEL === '1') {
+    const { nitro } = await import('nitro/vite');
+    const resolveStyle = createRequire(import.meta.url).resolve;
+    return {
+      css: { postcss: { plugins: [tailwindcss()] } },
+      // Keep the existing CSS unchanged; resolve package styles explicitly in
+      // server environments instead of treating their names as local files.
+      resolve: {
+        alias: [
+          { find: /^tailwindcss$/, replacement: resolveStyle('tailwindcss/index.css') },
+          { find: /^tw-animate-css$/, replacement: fileURLToPath(new URL('./node_modules/tw-animate-css/dist/tw-animate.css', import.meta.url)) },
+          { find: /^shadcn\/tailwind.css$/, replacement: resolveStyle('shadcn/tailwind.css') },
+        ],
+      },
+      plugins: [vinext(), nitro({ preset: 'vercel' })],
+    };
+  }
+
   // Keep Wrangler and Miniflare state project-local. These are non-secret tool
   // settings; application environment belongs in ignored `.env*` files.
   process.env.WRANGLER_WRITE_LOGS ??= 'false';

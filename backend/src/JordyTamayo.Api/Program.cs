@@ -23,12 +23,7 @@ builder.Services.AddSingleton<PasswordHasher>();
 builder.Services.AddSingleton<JwtTokenService>();
 
 builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
-    policy.SetIsOriginAllowed(origin =>
-        Uri.TryCreate(origin, UriKind.Absolute, out var uri) &&
-        (uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase) || uri.Host.Equals("127.0.0.1")))
-      .AllowAnyHeader()
-      .AllowAnyMethod()
-      .AllowCredentials()));
+    SiteCors.Configure(policy, builder.Configuration)));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

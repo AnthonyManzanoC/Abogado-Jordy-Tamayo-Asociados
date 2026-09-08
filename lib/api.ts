@@ -1,4 +1,10 @@
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5188';
+// Normalize dashboard values so a trailing slash never produces //api/... .
+export const API_BASE = (
+  process.env.NEXT_PUBLIC_API_URL?.trim() ||
+  (process.env.NODE_ENV === 'production'
+    ? 'https://api-jordy-tamayo.onrender.com'
+    : 'http://localhost:5188')
+).replace(/\/+$/, '');
 
 export function assetUrl(value: string) {
   if (!value) return '';
