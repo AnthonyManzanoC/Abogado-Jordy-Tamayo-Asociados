@@ -1,0 +1,20 @@
+# El contexto Docker solo necesita el proyecto de la API.
+**
+!backend/
+!backend/src/
+!backend/src/JordyTamayo.Api/
+!backend/src/JordyTamayo.Api/**
+
+# Nunca enviar secretos, archivos locales ni artefactos al constructor.
+**/bin/
+**/obj/
+**/TestResults/
+**/.env*
+**/appsettings.Local.json
+**/secrets.json
+**/*.pem
+**/*.pfx
+**/*.p12
+**/*.user
+**/*.suo
+**/Properties/launchSettings.json
