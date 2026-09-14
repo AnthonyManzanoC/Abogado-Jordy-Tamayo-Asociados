@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 
 EnvLoader.LoadFromWorkspace();
 DefaultTypeMap.MatchNamesWithUnderscores = true;
+SqlMapper.AddTypeHandler(new DateOnlyTypeHandler());
 
 var builder = WebApplication.CreateBuilder(args);
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL")
@@ -45,6 +46,22 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 app.UseCors();
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception exception)
+    {
+        app.Logger.LogError(exception, "Unhandled API error processing {Method} {Path}", context.Request.Method, context.Request.Path);
+        if (context.Response.HasStarted) throw;
+
+        context.Response.Clear();
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        await context.Response.WriteAsJsonAsync(new { message = "No fue posible procesar la solicitud. Inténtelo nuevamente o contacte al despacho por WhatsApp." });
+    }
+});
 app.UseAuthentication();
 app.UseAuthorization();
 

@@ -67,7 +67,10 @@ export function ChatBot({ site }: { site: PublicSite }) {
         }),
       });
       setResult(created);
-      setMessages((items) => [...items, { role: 'bot', text: 'Listo, tu solicitud quedó registrada. Guarda el enlace de seguimiento.' }]);
+      setMessages((items) => [...items, {
+        role: 'bot',
+        text: `Listo, tu solicitud quedó registrada. Estado: ${created.status}. Seguimiento: ${created.trackingUrl}`,
+      }]);
       event.currentTarget.reset();
     } catch (error) {
       setMessages((items) => [...items, { role: 'bot', text: error instanceof Error ? error.message : 'No fue posible registrar la cita.' }]);

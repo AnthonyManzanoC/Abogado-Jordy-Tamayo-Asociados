@@ -114,6 +114,7 @@ public sealed class ContentRepository(DatabaseOptions options)
         var appointmentStatus = isVirtual ? "Pendiente de pago" : "Pendiente";
         var paymentStatus = isVirtual ? "Pendiente de comprobante" : "No requerido";
         var trackingToken = Guid.NewGuid().ToString("N");
+        var preferredDate = request.PreferredDate?.ToDateTime(TimeOnly.MinValue);
         return await connection.QuerySingleAsync<Lead>("""
             INSERT INTO leads(id,name,whatsapp,email,legal_area,consultation_type,preferred_date,message,status,tracking_token,appointment_status,payment_status,source)
             VALUES (@Id,@Name,@Whatsapp,@Email,@LegalArea,@ConsultationType,@PreferredDate,@Message,@Status,@TrackingToken,@AppointmentStatus,@PaymentStatus,@Source)
@@ -126,7 +127,7 @@ public sealed class ContentRepository(DatabaseOptions options)
             Email = request.Email ?? "",
             request.LegalArea,
             ConsultationType = consultationType,
-            request.PreferredDate,
+            PreferredDate = preferredDate,
             request.Message,
             Status = status,
             TrackingToken = trackingToken,

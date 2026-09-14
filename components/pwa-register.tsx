@@ -18,20 +18,31 @@ export function PwaRegister() {
     }
 
     const capturePrompt = (event: Event) => {
-      event.preventDefault();
       setInstallPrompt(event as InstallPromptEvent);
     };
+    const markInstalled = () => {
+      setInstallPrompt(null);
+      setHidden(true);
+    };
     window.addEventListener('beforeinstallprompt', capturePrompt);
-    return () => window.removeEventListener('beforeinstallprompt', capturePrompt);
+    window.addEventListener('appinstalled', markInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', capturePrompt);
+      window.removeEventListener('appinstalled', markInstalled);
+    };
   }, []);
 
   if (!installPrompt || hidden) return null;
 
   async function install() {
     if (!installPrompt) return;
-    await installPrompt.prompt();
-    const choice = await installPrompt.userChoice;
-    if (choice.outcome === 'accepted') setInstallPrompt(null);
+    try {
+      await installPrompt.prompt();
+      await installPrompt.userChoice;
+    } finally {
+      setInstallPrompt(null);
+      setHidden(true);
+    }
   }
 
   return (
