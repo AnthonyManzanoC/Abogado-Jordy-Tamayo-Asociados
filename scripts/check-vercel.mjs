@@ -38,6 +38,13 @@ for (const icon of manifest.icons) await access(resolve(output, `static/${icon.s
 await access(resolve(output, 'static/sw.js'));
 console.log('PASS: PWA manifest, icons and service worker');
 
+for (const family of ['penal', 'familia', 'civil', 'transito']) {
+  for (const index of [1, 2, 3, 4]) {
+    await access(resolve(output, `static/images/services/${family}-${index}.svg`));
+  }
+}
+console.log('PASS: service carousel image assets');
+
 // Exercise the real API helper without network requests or database writes.
 const source = await readFile('lib/api.ts', 'utf8');
 const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText;

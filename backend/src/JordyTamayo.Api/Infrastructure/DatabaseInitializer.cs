@@ -43,16 +43,16 @@ public static class DatabaseInitializer
 
         var services = new[]
         {
-            new { Id = Guid.NewGuid(), Slug = "derecho-penal", Name = "Derecho penal", ShortDescription = "Defensa técnica, inmediata y estratégica en cada etapa del proceso.", LongDescription = "Acompañamiento integral desde la primera consulta, análisis de riesgos, diseño de la teoría del caso y representación durante todo el proceso penal.", Icon = "Shield", Accent = "01", Order = 1 },
-            new { Id = Guid.NewGuid(), Slug = "derecho-familia", Name = "Familia", ShortDescription = "Soluciones humanas y firmes para decisiones que cambian la vida.", LongDescription = "Asesoría en divorcios, alimentos, tenencia, régimen de visitas y acuerdos familiares, con claridad jurídica y sensibilidad personal.", Icon = "Users", Accent = "02", Order = 2 },
-            new { Id = Guid.NewGuid(), Slug = "derecho-civil", Name = "Civil y contratos", ShortDescription = "Prevención de conflictos y defensa de sus derechos patrimoniales.", LongDescription = "Redacción y revisión de contratos, obligaciones, cobros, propiedad y controversias civiles con una visión preventiva y práctica.", Icon = "FileText", Accent = "03", Order = 3 },
-            new { Id = Guid.NewGuid(), Slug = "transito", Name = "Tránsito", ShortDescription = "Respuesta ágil ante accidentes, citaciones y procedimientos.", LongDescription = "Defensa y asesoría en infracciones, accidentes de tránsito, impugnaciones y procedimientos administrativos o judiciales.", Icon = "Car", Accent = "04", Order = 4 }
+            new { Id = Guid.NewGuid(), Slug = "derecho-penal", Name = "Derecho penal", ShortDescription = "Defensa técnica, inmediata y estratégica en cada etapa del proceso.", LongDescription = "Acompañamiento integral desde la primera consulta, análisis de riesgos, diseño de la teoría del caso y representación durante todo el proceso penal.", Icon = "Shield", Accent = "01", Order = 1, Gallery = new[] { "/images/services/penal-1.svg", "/images/services/penal-2.svg", "/images/services/penal-3.svg", "/images/services/penal-4.svg" } },
+            new { Id = Guid.NewGuid(), Slug = "derecho-familia", Name = "Familia", ShortDescription = "Soluciones humanas y firmes para decisiones que cambian la vida.", LongDescription = "Asesoría en divorcios, alimentos, tenencia, régimen de visitas y acuerdos familiares, con claridad jurídica y sensibilidad personal.", Icon = "Users", Accent = "02", Order = 2, Gallery = new[] { "/images/services/familia-1.svg", "/images/services/familia-2.svg", "/images/services/familia-3.svg", "/images/services/familia-4.svg" } },
+            new { Id = Guid.NewGuid(), Slug = "derecho-civil", Name = "Civil y contratos", ShortDescription = "Prevención de conflictos y defensa de sus derechos patrimoniales.", LongDescription = "Redacción y revisión de contratos, obligaciones, cobros, propiedad y controversias civiles con una visión preventiva y práctica.", Icon = "FileText", Accent = "03", Order = 3, Gallery = new[] { "/images/services/civil-1.svg", "/images/services/civil-2.svg", "/images/services/civil-3.svg", "/images/services/civil-4.svg" } },
+            new { Id = Guid.NewGuid(), Slug = "transito", Name = "Tránsito", ShortDescription = "Respuesta ágil ante accidentes, citaciones y procedimientos.", LongDescription = "Defensa y asesoría en infracciones, accidentes de tránsito, impugnaciones y procedimientos administrativos o judiciales.", Icon = "Car", Accent = "04", Order = 4, Gallery = new[] { "/images/services/transito-1.svg", "/images/services/transito-2.svg", "/images/services/transito-3.svg", "/images/services/transito-4.svg" } }
         };
         foreach (var item in services)
         {
             await connection.ExecuteAsync("""
-                INSERT INTO legal_services(id,slug,name,short_description,long_description,icon,accent,is_featured,display_order,active)
-                VALUES (@Id,@Slug,@Name,@ShortDescription,@LongDescription,@Icon,@Accent,true,@Order,true)
+                INSERT INTO legal_services(id,slug,name,short_description,long_description,icon,accent,gallery_image_urls,is_featured,display_order,active)
+                VALUES (@Id,@Slug,@Name,@ShortDescription,@LongDescription,@Icon,@Accent,@Gallery,true,@Order,true)
                 ON CONFLICT (slug) DO NOTHING
                 """, item);
         }

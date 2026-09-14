@@ -12,7 +12,7 @@ export function ProfilePage() {
   const { profile } = site;
 
   return (
-    <PageFrame active="/perfil" profile={profile}>
+    <PageFrame active="/perfil" profile={profile} site={site}>
       <section className="relative overflow-hidden bg-[#11100e] px-5 py-16 text-white sm:px-8 sm:py-24 lg:px-12">
         <div className="hero-grid absolute inset-y-0 right-0 w-1/2 opacity-35" />
         <div className="relative mx-auto grid max-w-[1344px] items-end gap-12 lg:grid-cols-[1.05fr_.95fr]">

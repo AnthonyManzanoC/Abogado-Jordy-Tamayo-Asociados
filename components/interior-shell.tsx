@@ -2,8 +2,9 @@
 
 import { useState, type ReactNode } from 'react';
 import { ArrowUpRight, Camera, Menu, MessageCircle, Play, Scale, Users, X } from 'lucide-react';
-import type { SiteProfile } from '@/lib/site-data';
-import { defaultProfile } from '@/lib/site-data';
+import { ChatBot } from '@/components/chat-bot';
+import type { PublicSite, SiteProfile } from '@/lib/site-data';
+import { defaultProfile, defaultSite } from '@/lib/site-data';
 
 const navigation = [
   ['Inicio', '/'],
@@ -44,9 +45,10 @@ export function InteriorFooter({ profile = defaultProfile }: { profile?: SitePro
   );
 }
 
-export function PageFrame({ active, profile, children }: { active?: string; profile?: SiteProfile; children: ReactNode }) {
+export function PageFrame({ active, profile, site, children }: { active?: string; profile?: SiteProfile; site?: PublicSite; children: ReactNode }) {
   const resolvedProfile = profile ?? defaultProfile;
-  return <main className="min-h-screen bg-background text-foreground"><InteriorHeader active={active} />{children}<InteriorFooter profile={resolvedProfile} /><GlobalWhatsApp profile={resolvedProfile} /></main>;
+  const chatSite = site ?? { ...defaultSite, profile: resolvedProfile };
+  return <main className="min-h-screen bg-background text-foreground"><InteriorHeader active={active} />{children}<InteriorFooter profile={resolvedProfile} /><ChatBot site={chatSite} /><GlobalWhatsApp profile={resolvedProfile} /></main>;
 }
 
 function Social({ href, label, children }: { href: string; label: string; children: ReactNode }) { return <a href={href} target="_blank" rel="noreferrer" aria-label={label} className="grid size-10 place-items-center rounded-full border border-white/15 text-white/55 transition hover:border-[#d4a95d]/50 hover:text-[#d4a95d]">{children}</a>; }

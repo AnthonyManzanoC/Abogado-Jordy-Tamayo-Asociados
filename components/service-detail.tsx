@@ -2,14 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, MessageCircle, Scale } from 'lucide-react';
+import { ChatBot } from '@/components/chat-bot';
+import { ServiceGalleryBackground } from '@/components/service-gallery';
 import { apiFetch } from '@/lib/api';
-import { defaultServices, type LegalService } from '@/lib/site-data';
+import { defaultServices, defaultSite, type LegalService, type PublicSite } from '@/lib/site-data';
 
 export function ServiceDetail({ slug }: { slug: string }) {
   const [service, setService] = useState<LegalService | undefined>(() => defaultServices.find((item) => item.slug === slug));
+  const [site, setSite] = useState<PublicSite>(defaultSite);
 
   useEffect(() => {
     apiFetch<LegalService>(`/api/public/services/${slug}`).then(setService).catch(() => undefined);
+    apiFetch<PublicSite>('/api/public/site').then(setSite).catch(() => undefined);
   }, [slug]);
 
   if (!service) {
@@ -26,7 +30,9 @@ export function ServiceDetail({ slug }: { slug: string }) {
       </header>
 
       <section className="relative overflow-hidden bg-[#11100e] px-5 py-20 text-white sm:px-8 sm:py-28">
+        <ServiceGalleryBackground service={service} className="opacity-[.34]" />
         <div className="hero-grid absolute inset-y-0 right-0 w-1/2 opacity-40" />
+        <div className="absolute inset-0 bg-[#11100e]/58" />
         <div className="relative mx-auto max-w-[1280px]">
           <a href="/#servicios" className="inline-flex items-center gap-2 text-sm text-white/48 transition hover:text-white"><ArrowLeft className="size-4" /> Todas las áreas</a>
           <span className="mt-16 block text-xs font-semibold uppercase tracking-[.2em] text-[#d4a95d]">Área {service.accent}</span>
@@ -47,6 +53,7 @@ export function ServiceDetail({ slug }: { slug: string }) {
           </div>
         </div>
       </section>
+      <ChatBot site={site} />
     </main>
   );
 }

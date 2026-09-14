@@ -8,6 +8,8 @@ Sitio público y CMS administrativo para el despacho del Abg. Jordy Tamayo.
 - Backend: ASP.NET Core 9, API REST, JWT, PBKDF2 y capas `Domain`, `Features` e `Infrastructure`.
 - Datos: PostgreSQL en Supabase mediante Npgsql + Dapper.
 - Multimedia: fotografías iniciales en el frontend y nuevas cargas administrativas persistidas en PostgreSQL.
+- Citas: formulario web, chat determinístico, link público de seguimiento y comprobante de transferencia para consultas virtuales.
+- Notificaciones: Brevo transaccional configurable desde el admin o por variables de entorno del backend.
 
 ## Ejecutar
 
@@ -44,14 +46,39 @@ La API aplica automáticamente las migraciones pendientes y crea el contenido in
 - `/perfil`: biografía, enfoque y trayectoria.
 - `/vitrina-legal`: biblioteca filtrable de publicaciones; incrusta enlaces compatibles de TikTok, Instagram y YouTube.
 - `/contacto`: ubicación, WhatsApp y formulario completo de consulta.
-- `/admin`: identidad, biografía, imágenes, servicios, vitrina legal, consultas, WhatsApp, redes y ubicación.
+- `/seguimiento/[token]`: estado público de una solicitud y carga de comprobante para cita virtual.
+- `/admin`: identidad, biografía, imágenes, servicios, vitrina legal, consultas, WhatsApp, redes, ubicación, mapa y correo Brevo.
 - `/api/health`: comprobación de la API.
 
-## PWA y WhatsApp
+## PWA, WhatsApp y chat
 
 - El sitio es instalable como aplicación con manifiesto, service worker e iconos propios en `public/icons`.
 - El botón **Habla con el Abg.** aparece en todo el sitio y abre WhatsApp con un mensaje preparado.
 - El número utilizado por el botón se configura desde `/admin`, en **Contacto y canales**.
+- El chat flotante responde sin IA a servicios, ubicación y pagos; también puede registrar una cita real y entregar su link de seguimiento.
+- Las citas virtuales quedan con pago pendiente y permiten subir comprobante desde `/seguimiento/[token]`.
+
+## Correo Brevo
+
+El backend envía correos transaccionales mediante `POST https://api.brevo.com/v3/smtp/email`. La API key nunca debe ir al frontend ni al repositorio.
+
+Configure desde `/admin`, en **Correo Brevo**:
+
+- correo del admin que recibirá solicitudes, comprobantes y cambios de estado;
+- nombre y correo remitente verificado en Brevo;
+- API key de Brevo;
+- interruptor de notificaciones.
+
+También puede configurarse en Render con variables de entorno:
+
+```env
+BREVO_API_KEY=
+BREVO_ADMIN_EMAIL=janthonymc09@gmail.com
+BREVO_SENDER_EMAIL=janthonymc09@gmail.com
+FRONTEND_URL=https://abogado-jordy-tamayo-asociados.vercel.app
+```
+
+Si la API key se deja vacía en el panel, la API usa `BREVO_API_KEY` del entorno. Si se pega una nueva clave en el panel, queda guardada en PostgreSQL y puede cambiarse luego desde el admin.
 
 Antes de desplegar, use credenciales propias y mantenga `DATABASE_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` y `JWT_SECRET` exclusivamente en el backend de Render. El frontend solo necesita la URL pública de la API.
 
@@ -110,6 +137,10 @@ Configure las siguientes variables en **Environment**, nunca dentro del Dockerfi
 - `JWT_SECRET`: secreto aleatorio propio de al menos 32 bytes.
 - `ADMIN_EMAIL`: correo del administrador; conserve el mismo al usar una base existente.
 - `ADMIN_PASSWORD`: contraseña segura para crear el administrador inicial. No cambia la contraseña de una cuenta existente.
+- `FRONTEND_URL`: URL pública del frontend para construir links de seguimiento.
+- `BREVO_API_KEY`: opcional si la clave se guardará desde el admin.
+- `BREVO_ADMIN_EMAIL`: correo que recibirá las notificaciones principales.
+- `BREVO_SENDER_EMAIL`: remitente verificado en Brevo.
 
 Render utiliza `10000` como puerto predeterminado; este contenedor usa explícitamente `8080`, por lo que debe configurar `PORT=8080`. Consulte [Docker en Render](https://render.com/docs/docker) y [configuración de puertos](https://render.com/docs/web-services#port-binding).
 

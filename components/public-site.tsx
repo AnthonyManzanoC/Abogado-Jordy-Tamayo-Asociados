@@ -28,11 +28,13 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react';
+import { ChatBot } from '@/components/chat-bot';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { API_BASE, apiFetch, assetUrl } from '@/lib/api';
-import { defaultSite, type LegalService, type PublicSite } from '@/lib/site-data';
+import { defaultSite, type CreateLeadResponse, type LegalService, type PublicSite } from '@/lib/site-data';
+import { ServiceGalleryBackground } from '@/components/service-gallery';
 
 const icons: Record<string, LucideIcon> = { Shield, Users, FileText, Car, Scale, Landmark, BriefcaseBusiness };
 
@@ -43,6 +45,7 @@ export function PublicSite() {
   const [dark, setDark] = useState(false);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [leadResult, setLeadResult] = useState<CreateLeadResponse | null>(null);
   const [formError, setFormError] = useState('');
 
   useEffect(() => {
@@ -67,7 +70,7 @@ export function PublicSite() {
     setFormError('');
     const data = new FormData(event.currentTarget);
     try {
-      await apiFetch('/api/public/leads', {
+      const result = await apiFetch<CreateLeadResponse>('/api/public/leads', {
         method: 'POST',
         body: JSON.stringify({
           name: data.get('name'),
@@ -77,8 +80,10 @@ export function PublicSite() {
           consultationType: data.get('consultationType'),
           preferredDate: data.get('preferredDate') || null,
           message: data.get('message'),
+          source: 'Formulario inicio',
         }),
       });
+      setLeadResult(result);
       setSent(true);
       event.currentTarget.reset();
     } catch (error) {
@@ -266,7 +271,15 @@ export function PublicSite() {
             </div>
             <a href={profile.googleMapsUrl} target="_blank" rel="noreferrer" className="mt-10 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-semibold text-[#181612] transition hover:bg-[#efe7db]">Abrir ubicación <ArrowUpRight className="size-4" /></a>
           </div>
-          <div className="flex flex-col justify-center lg:px-8">
+          <div className="grid content-center gap-5 lg:px-8">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="relative min-h-64 overflow-hidden rounded-[1.6rem] bg-muted">
+                <img src={assetUrl(profile.officeBuildingImageUrl)} alt={`Oficina en ${profile.addressLine1}`} className="absolute inset-0 h-full w-full object-cover" />
+              </div>
+              <div className="min-h-64 overflow-hidden rounded-[1.6rem] border border-border bg-background">
+                <iframe src={profile.googleMapsEmbedUrl || profile.googleMapsUrl} title="Mapa del despacho" loading="lazy" referrerPolicy="no-referrer-when-downgrade" className="h-full w-full border-0" />
+              </div>
+            </div>
             <span className="text-xs font-semibold uppercase tracking-[.2em] text-[#a36d29]">Primera consulta</span>
             <h2 className="mt-5 text-4xl font-semibold leading-[.98] tracking-[-.04em] sm:text-6xl">Su caso merece ser escuchado.</h2>
             <p className="mt-6 max-w-lg leading-7 text-muted-foreground">Déjenos sus datos y una descripción breve. La información será revisada de forma confidencial para coordinar el siguiente paso.</p>
@@ -291,13 +304,15 @@ export function PublicSite() {
         </div>
       </footer>
 
+      <ChatBot site={site} />
+
       {whatsappHref ? (
         <a aria-label="Habla con el Abogado por WhatsApp" href={whatsappHref} target="_blank" rel="noreferrer" className="fixed bottom-5 right-5 z-40 flex h-14 items-center gap-2 rounded-full bg-[#25D366] px-5 text-sm font-semibold text-white shadow-[0_15px_35px_rgba(0,0,0,.28)] transition hover:scale-[1.03]"><MessageCircle className="size-5" /><span>Habla con el Abg.</span></a>
       ) : (
         <button aria-label="Habla con el Abogado" onClick={() => setConsultOpen(true)} className="fixed bottom-5 right-5 z-40 flex h-14 items-center gap-2 rounded-full bg-[#25D366] px-5 text-sm font-semibold text-white shadow-[0_15px_35px_rgba(0,0,0,.28)] transition hover:scale-[1.03]"><MessageCircle className="size-5" /><span>Habla con el Abg.</span></button>
       )}
 
-      <Dialog open={consultOpen} onOpenChange={(open) => { setConsultOpen(open); if (!open) { setSent(false); setFormError(''); } }}>
+      <Dialog open={consultOpen} onOpenChange={(open) => { setConsultOpen(open); if (!open) { setSent(false); setLeadResult(null); setFormError(''); } }}>
         <DialogContent className="max-h-[92vh] overflow-y-auto border border-border bg-card p-0 sm:max-w-2xl">
           <div className="border-b border-border bg-[#181612] px-6 py-7 text-white sm:px-8">
             <DialogHeader>
@@ -308,7 +323,7 @@ export function PublicSite() {
           </div>
           {sent ? (
             <div className="grid min-h-80 place-items-center p-8 text-center">
-              <div><CheckCircle2 className="mx-auto size-12 text-[#a36d29]" /><h3 className="mt-5 text-2xl font-semibold">Consulta recibida</h3><p className="mt-2 max-w-sm text-muted-foreground">Gracias. Revisaremos la información y nos pondremos en contacto por el medio indicado.</p><button onClick={() => setConsultOpen(false)} className="mt-6 rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-background">Cerrar</button></div>
+              <div><CheckCircle2 className="mx-auto size-12 text-[#a36d29]" /><h3 className="mt-5 text-2xl font-semibold">Consulta recibida</h3><p className="mt-2 max-w-sm text-muted-foreground">Gracias. Guarde el enlace de seguimiento para revisar el estado y subir comprobante si la consulta es virtual.</p>{leadResult && <a href={leadResult.trackingUrl} className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#d1a052] px-5 py-3 text-sm font-semibold text-[#17120c]">Abrir seguimiento <ArrowRight className="size-4" /></a>}<button onClick={() => setConsultOpen(false)} className="mt-4 rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-background">Cerrar</button></div>
             </div>
           ) : (
             <form onSubmit={submitLead} className="grid gap-5 p-6 sm:grid-cols-2 sm:p-8">
@@ -360,9 +375,10 @@ function SectionHeading({ kicker, title, copy }: { kicker: string; title: string
 function ServiceCard({ service }: { service: LegalService }) {
   const Icon = icons[service.icon] || Scale;
   return (
-    <a href={`/servicios/${service.slug}`} className="group flex min-h-[360px] flex-col border-b border-r border-border bg-card p-7 transition duration-300 hover:-translate-y-1 hover:bg-[#181612] hover:text-white sm:p-8">
-      <div className="flex items-start justify-between"><span className="text-xs font-semibold text-[#a36d29]">{service.accent}</span><Icon className="size-6 text-muted-foreground transition group-hover:text-[#d4a95d]" /></div>
-      <div className="mt-auto"><h3 className="text-2xl font-semibold tracking-tight">{service.name}</h3><p className="mt-4 leading-6 text-muted-foreground transition group-hover:text-white/55">{service.shortDescription}</p><span className="mt-8 inline-flex items-center gap-2 text-sm font-semibold">Explorar servicio <ArrowUpRight className="size-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" /></span></div>
+    <a href={`/servicios/${service.slug}`} className="group relative flex min-h-[360px] flex-col overflow-hidden border-b border-r border-border bg-card p-7 transition duration-300 hover:-translate-y-1 hover:bg-[#181612] hover:text-white sm:p-8">
+      <ServiceGalleryBackground service={service} className="opacity-0 transition duration-500 group-hover:opacity-100" />
+      <div className="relative flex items-start justify-between"><span className="text-xs font-semibold text-[#a36d29] transition group-hover:text-[#d4a95d]">{service.accent}</span><Icon className="size-6 text-muted-foreground transition group-hover:text-[#d4a95d]" /></div>
+      <div className="relative mt-auto"><h3 className="text-2xl font-semibold tracking-tight">{service.name}</h3><p className="mt-4 leading-6 text-muted-foreground transition group-hover:text-white/70">{service.shortDescription}</p><span className="mt-8 inline-flex items-center gap-2 text-sm font-semibold">Explorar servicio <ArrowUpRight className="size-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" /></span></div>
     </a>
   );
 }

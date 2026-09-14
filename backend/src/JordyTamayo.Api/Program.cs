@@ -19,6 +19,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddSingleton(new DatabaseOptions(ConnectionStringFactory.FromUrl(databaseUrl)));
 builder.Services.AddSingleton(new JwtOptions(jwtSecret));
 builder.Services.AddScoped<ContentRepository>();
+builder.Services.AddHttpClient<LeadNotificationService>();
 builder.Services.AddSingleton<PasswordHasher>();
 builder.Services.AddSingleton<JwtTokenService>();
 

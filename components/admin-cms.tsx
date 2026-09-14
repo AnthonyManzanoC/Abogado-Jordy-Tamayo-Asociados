@@ -7,15 +7,20 @@ import {
   BarChart3,
   Bell,
   BriefcaseBusiness,
+  CalendarCheck,
   Check,
   ChevronDown,
   CircleUserRound,
+  CreditCard,
   Eye,
   FileImage,
   Inbox,
+  KeyRound,
   LayoutDashboard,
   Loader2,
   LogOut,
+  MailCheck,
+  MapPinned,
   Menu,
   MessageSquareText,
   PanelLeftClose,
@@ -34,13 +39,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { apiFetch, authHeaders, assetUrl } from '@/lib/api';
-import { defaultProfile, type Lead, type LegalService, type MediaPost, type SiteProfile } from '@/lib/site-data';
+import { defaultNotificationSettings, defaultProfile, type Lead, type LegalService, type MediaPost, type NotificationSettings, type SiteProfile } from '@/lib/site-data';
 
 type Section = 'resumen' | 'identidad' | 'servicios' | 'vitrina' | 'consultas' | 'configuracion';
 type DashboardData = { totalLeads: number; newLeads: number; services: number; mediaPosts: number; recentLeads: Lead[] };
 
-const blankService: LegalService = { id: '', slug: '', name: '', shortDescription: '', longDescription: '', icon: 'Scale', accent: '05', isFeatured: true, displayOrder: 5, active: true };
+const blankService: LegalService = { id: '', slug: '', name: '', shortDescription: '', longDescription: '', icon: 'Scale', accent: '05', galleryImageUrls: ['', '', '', ''], isFeatured: true, displayOrder: 5, active: true };
 const blankMedia: MediaPost = { id: '', platform: 'TikTok', title: '', url: '', thumbnailUrl: '/images/jordy-tamayo-office.png', caption: '', category: 'Actualidad', displayOrder: 4, active: true };
+const leadStatusOptions = ['Nuevo', 'Pago pendiente', 'Comprobante recibido', 'Contactado', 'Agendado', 'Atendido', 'Cerrado', 'Archivado'];
 
 export function AdminCms() {
   const [token, setToken] = useState('');
@@ -48,6 +54,7 @@ export function AdminCms() {
   const [section, setSection] = useState<Section>('resumen');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profile, setProfile] = useState<SiteProfile>(defaultProfile);
+  const [notifications, setNotifications] = useState<NotificationSettings>(defaultNotificationSettings);
   const [services, setServices] = useState<LegalService[]>([]);
   const [media, setMedia] = useState<MediaPost[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -60,14 +67,15 @@ export function AdminCms() {
   const loadAll = useCallback(async (authToken: string) => {
     const headers = authHeaders(authToken);
     try {
-      const [nextProfile, nextServices, nextMedia, nextLeads, nextDashboard] = await Promise.all([
+      const [nextProfile, nextNotifications, nextServices, nextMedia, nextLeads, nextDashboard] = await Promise.all([
         apiFetch<SiteProfile>('/api/admin/profile', { headers }),
+        apiFetch<NotificationSettings>('/api/admin/notifications', { headers }),
         apiFetch<LegalService[]>('/api/admin/services', { headers }),
         apiFetch<MediaPost[]>('/api/admin/media', { headers }),
         apiFetch<Lead[]>('/api/admin/leads', { headers }),
         apiFetch<DashboardData>('/api/admin/dashboard', { headers }),
       ]);
-      setProfile(nextProfile); setServices(nextServices); setMedia(nextMedia); setLeads(nextLeads); setDashboard(nextDashboard);
+      setProfile(nextProfile); setNotifications(nextNotifications); setServices(nextServices); setMedia(nextMedia); setLeads(nextLeads); setDashboard(nextDashboard);
     } catch {
       localStorage.removeItem('jt-admin-token');
       setToken('');
@@ -108,12 +116,47 @@ export function AdminCms() {
     finally { setLoading(false); }
   }
 
-  async function uploadImage(file: File, key: 'heroImageUrl' | 'portraitImageUrl' | 'degreeImageUrl' | 'thumbnailUrl') {
+  async function saveNotifications(next?: NotificationSettings) {
+    setLoading(true);
+    try {
+      const payload = next ?? notifications;
+      const saved = await apiFetch<NotificationSettings>('/api/admin/notifications', {
+        method: 'PUT',
+        headers: authHeaders(token),
+        body: JSON.stringify(payload),
+      });
+      setNotifications(saved);
+      showNotice('Correo y notificaciones guardados.');
+    } catch (error) { showNotice(error instanceof Error ? error.message : 'No fue posible guardar el correo.'); }
+    finally { setLoading(false); }
+  }
+
+  async function testNotifications(email?: string) {
+    setLoading(true);
+    try {
+      const result = await apiFetch<{ message: string }>('/api/admin/notifications/test', {
+        method: 'POST',
+        headers: authHeaders(token),
+        body: JSON.stringify({ email: email || notifications.adminEmail }),
+      });
+      showNotice(result.message);
+    } catch (error) { showNotice(error instanceof Error ? error.message : 'No fue posible enviar la prueba.'); }
+    finally { setLoading(false); }
+  }
+
+  async function uploadImage(file: File, key: 'heroImageUrl' | 'portraitImageUrl' | 'degreeImageUrl' | 'officeBuildingImageUrl' | 'thumbnailUrl' | 'serviceGallery', index = 0) {
     const body = new FormData(); body.append('file', file);
     setLoading(true);
     try {
       const result = await apiFetch<{ url: string }>('/api/admin/upload', { method: 'POST', headers: authHeaders(token), body });
       if (key === 'thumbnailUrl') setMediaEditor((current) => current ? { ...current, thumbnailUrl: result.url } : current);
+      else if (key === 'serviceGallery') setServiceEditor((current) => {
+        if (!current) return current;
+        const gallery = [...(current.galleryImageUrls || [])];
+        while (gallery.length < 4) gallery.push('');
+        gallery[index] = result.url;
+        return { ...current, galleryImageUrls: gallery };
+      });
       else setProfile((current) => ({ ...current, [key]: result.url }));
       showNotice('Imagen cargada. Guarde los cambios para publicarla.');
     } catch (error) { showNotice(error instanceof Error ? error.message : 'No fue posible cargar la imagen.'); }
@@ -169,7 +212,7 @@ export function AdminCms() {
     servicios: ['Servicios legales', 'Cree y ordene las áreas de práctica con su página dedicada.'],
     vitrina: ['Vitrina legal', 'Enlace videos, casos y publicaciones destacadas de sus redes.'],
     consultas: ['Consultas y citas', 'Gestione cada contacto desde su llegada hasta el cierre.'],
-    configuracion: ['Contacto y canales', 'Configure WhatsApp, redes sociales, despacho y datos de contacto.'],
+    configuracion: ['Contacto, mapa y correo', 'Configure WhatsApp, redes, ubicación, mapa embebido y notificaciones Brevo.'],
   };
 
   return (
@@ -203,13 +246,13 @@ export function AdminCms() {
           {section === 'servicios' && <ServicesManager services={services} onEdit={setServiceEditor} onDelete={deleteService} />}
           {section === 'vitrina' && <MediaManager posts={media} onEdit={setMediaEditor} onDelete={deleteMedia} />}
           {section === 'consultas' && <LeadsManager leads={leads} onStatus={updateLeadStatus} />}
-          {section === 'configuracion' && <SettingsEditor profile={profile} setProfile={setProfile} />}
+          {section === 'configuracion' && <SettingsEditor profile={profile} setProfile={setProfile} notifications={notifications} setNotifications={setNotifications} onUpload={uploadImage} onSaveNotifications={saveNotifications} onTestNotifications={testNotifications} loading={loading} />}
         </div>
       </div>
 
       {sidebarOpen && <button className="fixed inset-0 z-30 bg-black/30 lg:hidden" aria-label="Cerrar menú" onClick={() => setSidebarOpen(false)} />}
       {notice && <div className="fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full bg-[#191713] px-5 py-3 text-sm font-medium text-white shadow-xl"><Check className="size-4 text-[#d4a95d]" /> {notice}</div>}
-      <ServiceDialog value={serviceEditor} onChange={setServiceEditor} onSave={saveService} loading={loading} />
+      <ServiceDialog value={serviceEditor} onChange={setServiceEditor} onSave={saveService} onUpload={uploadImage} loading={loading} />
       <MediaDialog value={mediaEditor} onChange={setMediaEditor} onSave={saveMedia} onUpload={uploadImage} loading={loading} />
       {section === 'servicios' && <button onClick={() => setServiceEditor({ ...blankService, displayOrder: services.length + 1, accent: String(services.length + 1).padStart(2, '0') })} className="fixed bottom-6 right-6 z-20 inline-flex h-13 items-center gap-2 rounded-full bg-[#d1a052] px-6 text-sm font-semibold text-[#17120c] shadow-xl lg:right-10"><Plus className="size-4" /> Nuevo servicio</button>}
       {section === 'vitrina' && <button onClick={() => setMediaEditor({ ...blankMedia, displayOrder: media.length + 1 })} className="fixed bottom-6 right-6 z-20 inline-flex h-13 items-center gap-2 rounded-full bg-[#d1a052] px-6 text-sm font-semibold text-[#17120c] shadow-xl lg:right-10"><Plus className="size-4" /> Añadir publicación</button>}
@@ -237,15 +280,209 @@ function IdentityEditor({ profile, setProfile, onUpload }: { profile: SiteProfil
   return <div className="grid gap-6 xl:grid-cols-[1fr_360px]"><div className="space-y-6"><EditorCard title="Portada" description="El primer mensaje que verá una persona al entrar."><div className="grid gap-5 sm:grid-cols-2"><FormField label="Etiqueta superior"><Input value={profile.eyebrow} onChange={(e) => update('eyebrow', e.target.value)} /></FormField><FormField label="Nombre público"><Input value={profile.fullName} onChange={(e) => update('fullName', e.target.value)} /></FormField><FormField label="Primera línea"><Input value={profile.heroTitle} onChange={(e) => update('heroTitle', e.target.value)} /></FormField><FormField label="Línea destacada"><Input value={profile.heroAccent} onChange={(e) => update('heroAccent', e.target.value)} /></FormField><div className="sm:col-span-2"><FormField label="Descripción"><Textarea value={profile.heroDescription} onChange={(e) => update('heroDescription', e.target.value)} className="min-h-24" /></FormField></div></div></EditorCard><EditorCard title="Biografía" description="Presente su formación, enfoque y forma de trabajar."><div className="grid gap-5"><FormField label="Título de la sección"><Input value={profile.bioTitle} onChange={(e) => update('bioTitle', e.target.value)} /></FormField><FormField label="Texto biográfico"><Textarea value={profile.bioBody} onChange={(e) => update('bioBody', e.target.value)} className="min-h-36" /></FormField><FormField label="Credenciales"><Input value={profile.credentials} onChange={(e) => update('credentials', e.target.value)} /></FormField></div></EditorCard><EditorCard title="Cifras de autoridad" description="Mantenga estos datos precisos y verificables."><div className="grid gap-5 sm:grid-cols-2"><FormField label="Prueba social"><Input value={profile.socialProof} onChange={(e) => update('socialProof', e.target.value)} /></FormField><FormField label="Descripción"><Input value={profile.socialProofLabel} onChange={(e) => update('socialProofLabel', e.target.value)} /></FormField><FormField label="Métrica 1"><Input value={profile.metricOneValue} onChange={(e) => update('metricOneValue', e.target.value)} /></FormField><FormField label="Etiqueta métrica 1"><Input value={profile.metricOneLabel} onChange={(e) => update('metricOneLabel', e.target.value)} /></FormField><FormField label="Métrica 2"><Input value={profile.metricTwoValue} onChange={(e) => update('metricTwoValue', e.target.value)} /></FormField><FormField label="Etiqueta métrica 2"><Input value={profile.metricTwoLabel} onChange={(e) => update('metricTwoLabel', e.target.value)} /></FormField></div></EditorCard></div><div className="space-y-5"><ImageUploader title="Foto principal" url={profile.heroImageUrl} onFile={(file) => onUpload(file, 'heroImageUrl')} /><ImageUploader title="Foto de perfil" url={profile.portraitImageUrl} onFile={(file) => onUpload(file, 'portraitImageUrl')} /><ImageUploader title="Foto académica" url={profile.degreeImageUrl} onFile={(file) => onUpload(file, 'degreeImageUrl')} /></div></div>;
 }
 
-function ServicesManager({ services, onEdit, onDelete }: { services: LegalService[]; onEdit: (item: LegalService) => void; onDelete: (id: string) => void }) { return <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">{services.map((service) => <div key={service.id} className="flex min-h-64 flex-col rounded-2xl border border-black/8 bg-white p-6"><div className="flex items-start justify-between"><span className="text-xs font-semibold text-[#9a6728]">{service.accent}</span><StatusBadge status={service.active ? 'Publicado' : 'Oculto'} /></div><h2 className="mt-10 text-2xl font-semibold tracking-tight">{service.name}</h2><p className="mt-3 line-clamp-2 text-sm leading-6 text-black/45">{service.shortDescription}</p><div className="mt-auto flex gap-2 pt-6"><button onClick={() => onEdit({ ...service })} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-black/10 px-3 py-2.5 text-xs font-semibold"><Pencil className="size-3.5" /> Editar</button><button onClick={() => onDelete(service.id)} aria-label={`Eliminar ${service.name}`} className="grid size-10 place-items-center rounded-xl border border-red-200 text-red-600"><Trash2 className="size-4" /></button></div></div>)}{!services.length && <Empty text="Aún no hay servicios. Cree el primero." />}</div>; }
+function ServicesManager({ services, onEdit, onDelete }: { services: LegalService[]; onEdit: (item: LegalService) => void; onDelete: (id: string) => void }) { return <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">{services.map((service) => <div key={service.id} className="relative flex min-h-64 flex-col overflow-hidden rounded-2xl border border-black/8 bg-white p-6">{service.galleryImageUrls?.[0] && <img src={assetUrl(service.galleryImageUrls[0])} alt="" className="absolute inset-0 h-full w-full object-cover opacity-[.08]" />}<div className="relative flex items-start justify-between"><span className="text-xs font-semibold text-[#9a6728]">{service.accent}</span><StatusBadge status={service.active ? 'Publicado' : 'Oculto'} /></div><h2 className="relative mt-10 text-2xl font-semibold tracking-tight">{service.name}</h2><p className="relative mt-3 line-clamp-2 text-sm leading-6 text-black/45">{service.shortDescription}</p><div className="relative mt-auto flex gap-2 pt-6"><button onClick={() => onEdit({ ...service, galleryImageUrls: service.galleryImageUrls || [] })} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-black/10 bg-white/80 px-3 py-2.5 text-xs font-semibold backdrop-blur"><Pencil className="size-3.5" /> Editar</button><button onClick={() => onDelete(service.id)} aria-label={`Eliminar ${service.name}`} className="grid size-10 place-items-center rounded-xl border border-red-200 bg-white/80 text-red-600 backdrop-blur"><Trash2 className="size-4" /></button></div></div>)}{!services.length && <Empty text="Aún no hay servicios. Cree el primero." />}</div>; }
 
 function MediaManager({ posts, onEdit, onDelete }: { posts: MediaPost[]; onEdit: (item: MediaPost) => void; onDelete: (id: string) => void }) { return <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{posts.map((post) => <div key={post.id} className="overflow-hidden rounded-2xl border border-black/8 bg-white"><div className="relative h-56 bg-[#191713]"><img src={assetUrl(post.thumbnailUrl)} alt="" className="h-full w-full object-cover" /><span className="absolute left-4 top-4 rounded-full bg-black/55 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[.15em] text-white backdrop-blur">{post.platform}</span></div><div className="p-5"><p className="text-xs text-[#9a6728]">{post.category}</p><h2 className="mt-2 text-lg font-semibold">{post.title}</h2><p className="mt-2 line-clamp-2 text-sm leading-6 text-black/45">{post.caption}</p><div className="mt-5 flex gap-2"><button onClick={() => onEdit({ ...post })} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-black/10 py-2.5 text-xs font-semibold"><Pencil className="size-3.5" /> Editar</button><button onClick={() => onDelete(post.id)} className="grid size-10 place-items-center rounded-xl border border-red-200 text-red-600"><Trash2 className="size-4" /></button></div></div></div>)}</div>; }
 
-function LeadsManager({ leads, onStatus }: { leads: Lead[]; onStatus: (id: string, status: string) => void }) { return <div className="overflow-hidden rounded-2xl border border-black/8 bg-white"><div className="overflow-x-auto"><table className="w-full min-w-[850px] text-left text-sm"><thead className="border-b border-black/8 bg-[#faf8f4] text-xs text-black/40"><tr><th className="px-5 py-4 font-medium">Cliente</th><th className="px-5 py-4 font-medium">Consulta</th><th className="px-5 py-4 font-medium">Contacto</th><th className="px-5 py-4 font-medium">Recibida</th><th className="px-5 py-4 font-medium">Estado</th></tr></thead><tbody className="divide-y divide-black/8">{leads.map((lead) => <tr key={lead.id} className="align-top"><td className="px-5 py-5"><strong>{lead.name}</strong><span className="mt-1 block text-xs text-black/40">{lead.consultationType}</span></td><td className="max-w-sm px-5 py-5"><strong className="text-xs text-[#9a6728]">{lead.legalArea}</strong><p className="mt-1 line-clamp-2 text-xs leading-5 text-black/50">{lead.message}</p></td><td className="px-5 py-5"><a href={`https://wa.me/${lead.whatsapp.replace(/\D/g, '')}`} target="_blank" className="text-xs font-semibold text-[#267b4a]">{lead.whatsapp}</a>{lead.email && <span className="mt-1 block text-xs text-black/40">{lead.email}</span>}</td><td className="px-5 py-5 text-xs text-black/45">{new Date(lead.createdAt).toLocaleDateString('es-EC')}</td><td className="px-5 py-5"><select value={lead.status} onChange={(e) => onStatus(lead.id, e.target.value)} className="rounded-full border border-black/10 bg-white px-3 py-2 text-xs font-semibold"><option>Nuevo</option><option>Contactado</option><option>Agendado</option><option>Cerrado</option><option>Archivado</option></select></td></tr>)}</tbody></table></div>{!leads.length && <Empty text="Todavía no se han recibido consultas." />}</div>; }
+function LeadsManager({ leads, onStatus }: { leads: Lead[]; onStatus: (id: string, status: string) => void }) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-black/8 bg-white">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[1120px] text-left text-sm">
+          <thead className="border-b border-black/8 bg-[#faf8f4] text-xs text-black/40">
+            <tr>
+              <th className="px-5 py-4 font-medium">Cliente</th>
+              <th className="px-5 py-4 font-medium">Consulta</th>
+              <th className="px-5 py-4 font-medium">Seguimiento</th>
+              <th className="px-5 py-4 font-medium">Pago</th>
+              <th className="px-5 py-4 font-medium">Recibida</th>
+              <th className="px-5 py-4 font-medium">Estado</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-black/8">
+            {leads.map((lead) => (
+              <tr key={lead.id} className="align-top">
+                <td className="px-5 py-5">
+                  <strong>{lead.name}</strong>
+                  <span className="mt-1 block text-xs text-black/40">{lead.consultationType}</span>
+                  <a href={`https://wa.me/${lead.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="mt-2 block text-xs font-semibold text-[#267b4a]">{lead.whatsapp}</a>
+                  {lead.email && <span className="mt-1 block text-xs text-black/40">{lead.email}</span>}
+                </td>
+                <td className="max-w-sm px-5 py-5">
+                  <strong className="text-xs text-[#9a6728]">{lead.legalArea}</strong>
+                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-black/50">{lead.message}</p>
+                  <span className="mt-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-[.14em] text-black/32"><CalendarCheck className="size-3" /> {lead.appointmentStatus || 'Pendiente'}</span>
+                </td>
+                <td className="px-5 py-5">
+                  <a href={`/seguimiento/${lead.trackingToken}`} target="_blank" className="inline-flex items-center gap-2 rounded-full border border-black/10 px-3 py-2 text-xs font-semibold"><MapPinned className="size-3.5" /> Abrir link</a>
+                  <span className="mt-2 block max-w-[210px] truncate text-[10px] text-black/35">{lead.trackingToken}</span>
+                </td>
+                <td className="px-5 py-5">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-[#f4f1eb] px-3 py-2 text-xs font-semibold text-black/55"><CreditCard className="size-3.5 text-[#9a6728]" /> {lead.paymentStatus || 'No requerido'}</span>
+                  {lead.paymentProofUrl && <a href={assetUrl(lead.paymentProofUrl)} target="_blank" rel="noreferrer" className="mt-2 block text-xs font-semibold text-[#9a6728]">Ver comprobante</a>}
+                </td>
+                <td className="px-5 py-5 text-xs text-black/45">{new Date(lead.createdAt).toLocaleDateString('es-EC')}</td>
+                <td className="px-5 py-5">
+                  <select value={lead.status} onChange={(e) => onStatus(lead.id, e.target.value)} className="rounded-full border border-black/10 bg-white px-3 py-2 text-xs font-semibold">
+                    {leadStatusOptions.map((status) => <option key={status}>{status}</option>)}
+                  </select>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {!leads.length && <Empty text="Todavía no se han recibido consultas." />}
+    </div>
+  );
+}
 
-function SettingsEditor({ profile, setProfile }: { profile: SiteProfile; setProfile: (value: SiteProfile) => void }) { const update = (key: keyof SiteProfile, value: string) => setProfile({ ...profile, [key]: value }); return <div className="grid gap-6 xl:grid-cols-2"><EditorCard title="WhatsApp y contacto" description="El número debe incluir el código de país. Ejemplo Ecuador: 593…"><div className="grid gap-5"><FormField label="Número de WhatsApp"><Input value={profile.whatsAppNumber} onChange={(e) => update('whatsAppNumber', e.target.value)} placeholder="593990000000" /></FormField><FormField label="Teléfono"><Input value={profile.phone} onChange={(e) => update('phone', e.target.value)} /></FormField><FormField label="Correo"><Input type="email" value={profile.email} onChange={(e) => update('email', e.target.value)} /></FormField></div></EditorCard><EditorCard title="Redes sociales" description="Pegue los enlaces públicos completos de cada perfil."><div className="grid gap-5"><FormField label="TikTok"><Input value={profile.tikTokUrl} onChange={(e) => update('tikTokUrl', e.target.value)} /></FormField><FormField label="Instagram"><Input value={profile.instagramUrl} onChange={(e) => update('instagramUrl', e.target.value)} /></FormField><FormField label="Facebook"><Input value={profile.facebookUrl} onChange={(e) => update('facebookUrl', e.target.value)} /></FormField></div></EditorCard><div className="xl:col-span-2"><EditorCard title="Ubicación del despacho" description="Estos datos aparecen en la sección de contacto y botones de mapa."><div className="grid gap-5 sm:grid-cols-2"><FormField label="Edificio"><Input value={profile.addressLine1} onChange={(e) => update('addressLine1', e.target.value)} /></FormField><FormField label="Calles"><Input value={profile.addressLine2} onChange={(e) => update('addressLine2', e.target.value)} /></FormField><FormField label="Ciudad"><Input value={profile.city} onChange={(e) => update('city', e.target.value)} /></FormField><FormField label="Enlace de Google Maps"><Input value={profile.googleMapsUrl} onChange={(e) => update('googleMapsUrl', e.target.value)} /></FormField></div></EditorCard></div></div>; }
+function SettingsEditor({
+  profile,
+  setProfile,
+  notifications,
+  setNotifications,
+  onUpload,
+  onSaveNotifications,
+  onTestNotifications,
+  loading,
+}: {
+  profile: SiteProfile;
+  setProfile: (value: SiteProfile) => void;
+  notifications: NotificationSettings;
+  setNotifications: (value: NotificationSettings) => void;
+  onUpload: (file: File, key: 'officeBuildingImageUrl') => void;
+  onSaveNotifications: (value?: NotificationSettings) => void;
+  onTestNotifications: (email?: string) => void;
+  loading: boolean;
+}) {
+  const [apiKeyDraft, setApiKeyDraft] = useState('');
+  const update = (key: keyof SiteProfile, value: string) => setProfile({ ...profile, [key]: value });
+  const updateNotification = (key: keyof NotificationSettings, value: string | boolean) => setNotifications({ ...notifications, [key]: value });
 
-function ServiceDialog({ value, onChange, onSave, loading }: { value: LegalService | null; onChange: (value: LegalService | null) => void; onSave: (value: LegalService) => void; loading: boolean }) { if (!value) return null; const update = (key: keyof LegalService, next: string | boolean | number) => onChange({ ...value, [key]: next }); return <Dialog open onOpenChange={(open) => !open && onChange(null)}><DialogContent className="max-h-[92vh] overflow-y-auto bg-white sm:max-w-2xl"><DialogHeader><DialogTitle className="text-2xl">{value.id ? 'Editar servicio' : 'Nuevo servicio'}</DialogTitle><DialogDescription>Cada servicio tendrá automáticamente su propia página pública.</DialogDescription></DialogHeader><div className="mt-3 grid gap-5 sm:grid-cols-2"><FormField label="Nombre"><Input value={value.name} onChange={(e) => update('name', e.target.value)} /></FormField><FormField label="URL corta"><Input value={value.slug} onChange={(e) => update('slug', e.target.value)} placeholder="derecho-penal" /></FormField><FormField label="Número"><Input value={value.accent} onChange={(e) => update('accent', e.target.value)} /></FormField><FormField label="Icono"><select value={value.icon} onChange={(e) => update('icon', e.target.value)} className="h-8 rounded-lg border border-input px-2 text-sm"><option>Scale</option><option>Shield</option><option>Users</option><option>FileText</option><option>Car</option><option>Landmark</option><option>BriefcaseBusiness</option></select></FormField><div className="sm:col-span-2"><FormField label="Resumen"><Textarea value={value.shortDescription} onChange={(e) => update('shortDescription', e.target.value)} /></FormField></div><div className="sm:col-span-2"><FormField label="Descripción de la página"><Textarea value={value.longDescription} onChange={(e) => update('longDescription', e.target.value)} className="min-h-28" /></FormField></div><FormField label="Orden"><Input type="number" value={value.displayOrder} onChange={(e) => update('displayOrder', Number(e.target.value))} /></FormField><label className="flex items-center justify-between rounded-xl border border-black/10 px-4 py-3 text-sm"><span>Publicado</span><Switch checked={value.active} onCheckedChange={(checked) => update('active', checked)} /></label></div><button onClick={() => onSave(value)} disabled={loading || !value.name || !value.shortDescription} className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#191713] px-5 text-sm font-semibold text-white disabled:opacity-40"><Save className="size-4" /> Guardar servicio</button></DialogContent></Dialog>; }
+  return (
+    <div className="grid gap-6 xl:grid-cols-2">
+      <EditorCard title="WhatsApp y contacto" description="El número debe incluir el código de país. Ejemplo Ecuador: 593...">
+        <div className="grid gap-5">
+          <FormField label="Número de WhatsApp"><Input value={profile.whatsAppNumber} onChange={(e) => update('whatsAppNumber', e.target.value)} placeholder="593990000000" /></FormField>
+          <FormField label="Teléfono"><Input value={profile.phone} onChange={(e) => update('phone', e.target.value)} /></FormField>
+          <FormField label="Correo público"><Input type="email" value={profile.email} onChange={(e) => update('email', e.target.value)} /></FormField>
+        </div>
+      </EditorCard>
+
+      <EditorCard title="Redes sociales" description="Pegue los enlaces públicos completos de cada perfil.">
+        <div className="grid gap-5">
+          <FormField label="TikTok"><Input value={profile.tikTokUrl} onChange={(e) => update('tikTokUrl', e.target.value)} /></FormField>
+          <FormField label="Instagram"><Input value={profile.instagramUrl} onChange={(e) => update('instagramUrl', e.target.value)} /></FormField>
+          <FormField label="Facebook"><Input value={profile.facebookUrl} onChange={(e) => update('facebookUrl', e.target.value)} /></FormField>
+        </div>
+      </EditorCard>
+
+      <div className="xl:col-span-2">
+        <EditorCard title="Ubicación del despacho" description="El mapa embebido y la foto salen en inicio y contacto.">
+          <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
+            <div className="grid gap-5 sm:grid-cols-2">
+              <FormField label="Edificio"><Input value={profile.addressLine1} onChange={(e) => update('addressLine1', e.target.value)} /></FormField>
+              <FormField label="Calles"><Input value={profile.addressLine2} onChange={(e) => update('addressLine2', e.target.value)} /></FormField>
+              <FormField label="Ciudad"><Input value={profile.city} onChange={(e) => update('city', e.target.value)} /></FormField>
+              <FormField label="Enlace de Google Maps"><Input value={profile.googleMapsUrl} onChange={(e) => update('googleMapsUrl', e.target.value)} /></FormField>
+              <div className="sm:col-span-2"><FormField label="URL del mapa embebido"><Input value={profile.googleMapsEmbedUrl} onChange={(e) => update('googleMapsEmbedUrl', e.target.value)} placeholder="https://www.google.com/maps?...&output=embed" /></FormField></div>
+            </div>
+            <ImageUploader title="Foto del edificio" url={profile.officeBuildingImageUrl} onFile={(file) => onUpload(file, 'officeBuildingImageUrl')} />
+          </div>
+        </EditorCard>
+      </div>
+
+      <div className="xl:col-span-2">
+        <EditorCard title="Correo Brevo" description="Notifica al admin cuando entra una cita, cuando suben comprobante y cuando cambia el estado.">
+          <div className="grid gap-5 sm:grid-cols-2">
+            <label className="flex items-center justify-between rounded-xl border border-black/10 px-4 py-3 text-sm">
+              <span className="inline-flex items-center gap-2"><MailCheck className="size-4 text-[#9a6728]" /> Notificaciones activas</span>
+              <Switch checked={notifications.enabled} onCheckedChange={(checked) => updateNotification('enabled', checked)} />
+            </label>
+            <FormField label="Correo del admin"><Input type="email" value={notifications.adminEmail} onChange={(e) => updateNotification('adminEmail', e.target.value)} /></FormField>
+            <FormField label="Nombre remitente"><Input value={notifications.senderName} onChange={(e) => updateNotification('senderName', e.target.value)} /></FormField>
+            <FormField label="Correo remitente verificado"><Input type="email" value={notifications.senderEmail} onChange={(e) => updateNotification('senderEmail', e.target.value)} /></FormField>
+            <div className="sm:col-span-2">
+              <FormField label={notifications.hasBrevoApiKey ? 'API key Brevo guardada' : 'API key Brevo'}>
+                <Input type="password" value={apiKeyDraft} onChange={(e) => setApiKeyDraft(e.target.value)} placeholder={notifications.hasBrevoApiKey ? 'Deje en blanco para conservar la clave actual' : 'Pegue la API key de Brevo'} />
+              </FormField>
+            </div>
+          </div>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <button onClick={() => { onSaveNotifications({ ...notifications, brevoApiKey: apiKeyDraft }); setApiKeyDraft(''); }} disabled={loading} className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#191713] px-5 text-sm font-semibold text-white disabled:opacity-50"><Save className="size-4" /> Guardar correo</button>
+            <button onClick={() => onTestNotifications(notifications.adminEmail)} disabled={loading} className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-black/10 px-5 text-sm font-semibold disabled:opacity-50"><KeyRound className="size-4" /> Enviar prueba</button>
+          </div>
+        </EditorCard>
+      </div>
+    </div>
+  );
+}
+
+function ServiceDialog({
+  value,
+  onChange,
+  onSave,
+  onUpload,
+  loading,
+}: {
+  value: LegalService | null;
+  onChange: (value: LegalService | null) => void;
+  onSave: (value: LegalService) => void;
+  onUpload: (file: File, key: 'serviceGallery', index: number) => void;
+  loading: boolean;
+}) {
+  if (!value) return null;
+  const update = (key: keyof LegalService, next: string | boolean | number | string[]) => onChange({ ...value, [key]: next });
+  const gallery = [...(value.galleryImageUrls || [])];
+  while (gallery.length < 4) gallery.push('');
+  const updateGallery = (index: number, url: string) => {
+    const next = [...gallery];
+    next[index] = url;
+    update('galleryImageUrls', next);
+  };
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onChange(null)}>
+      <DialogContent className="max-h-[92vh] overflow-y-auto bg-white sm:max-w-3xl">
+        <DialogHeader>
+          <DialogTitle className="text-2xl">{value.id ? 'Editar servicio' : 'Nuevo servicio'}</DialogTitle>
+          <DialogDescription>Cada servicio tendrá página pública y carrusel visual administrable.</DialogDescription>
+        </DialogHeader>
+        <div className="mt-3 grid gap-5 sm:grid-cols-2">
+          <FormField label="Nombre"><Input value={value.name} onChange={(e) => update('name', e.target.value)} /></FormField>
+          <FormField label="URL corta"><Input value={value.slug} onChange={(e) => update('slug', e.target.value)} placeholder="derecho-penal" /></FormField>
+          <FormField label="Número"><Input value={value.accent} onChange={(e) => update('accent', e.target.value)} /></FormField>
+          <FormField label="Icono"><select value={value.icon} onChange={(e) => update('icon', e.target.value)} className="h-8 rounded-lg border border-input px-2 text-sm"><option>Scale</option><option>Shield</option><option>Users</option><option>FileText</option><option>Car</option><option>Landmark</option><option>BriefcaseBusiness</option></select></FormField>
+          <div className="sm:col-span-2"><FormField label="Resumen"><Textarea value={value.shortDescription} onChange={(e) => update('shortDescription', e.target.value)} /></FormField></div>
+          <div className="sm:col-span-2"><FormField label="Descripción de la página"><Textarea value={value.longDescription} onChange={(e) => update('longDescription', e.target.value)} className="min-h-28" /></FormField></div>
+          <FormField label="Orden"><Input type="number" value={value.displayOrder} onChange={(e) => update('displayOrder', Number(e.target.value))} /></FormField>
+          <label className="flex items-center justify-between rounded-xl border border-black/10 px-4 py-3 text-sm"><span>Publicado</span><Switch checked={value.active} onCheckedChange={(checked) => update('active', checked)} /></label>
+          <div className="sm:col-span-2">
+            <div className="mb-3 flex items-center gap-2 text-xs font-semibold text-black/58"><FileImage className="size-4 text-[#9a6728]" /> Carrusel del servicio</div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {gallery.slice(0, 4).map((url, index) => (
+                <div key={index} className="rounded-2xl border border-black/8 bg-[#faf8f4] p-3">
+                  <div className="relative h-36 overflow-hidden rounded-xl bg-[#191713]">
+                    {url ? <img src={assetUrl(url)} alt="" className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center text-xs text-white/30">Imagen {index + 1}</div>}
+                  </div>
+                  <div className="mt-3 grid gap-2">
+                    <Input value={url} onChange={(e) => updateGallery(index, e.target.value)} placeholder="/images/services/..." />
+                    <label className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-full border border-black/10 bg-white text-xs font-semibold">
+                      <Upload className="size-4" /> Subir imagen
+                      <input type="file" accept="image/*" className="sr-only" onChange={(event) => event.target.files?.[0] && onUpload(event.target.files[0], 'serviceGallery', index)} />
+                    </label>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <button onClick={() => onSave({ ...value, galleryImageUrls: gallery.slice(0, 4) })} disabled={loading || !value.name || !value.shortDescription} className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#191713] px-5 text-sm font-semibold text-white disabled:opacity-40"><Save className="size-4" /> Guardar servicio</button>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 function MediaDialog({ value, onChange, onSave, onUpload, loading }: { value: MediaPost | null; onChange: (value: MediaPost | null) => void; onSave: (value: MediaPost) => void; onUpload: (file: File, key: 'thumbnailUrl') => void; loading: boolean }) { if (!value) return null; const update = (key: keyof MediaPost, next: string | boolean | number) => onChange({ ...value, [key]: next }); return <Dialog open onOpenChange={(open) => !open && onChange(null)}><DialogContent className="max-h-[92vh] overflow-y-auto bg-white sm:max-w-2xl"><DialogHeader><DialogTitle className="text-2xl">{value.id ? 'Editar publicación' : 'Añadir a la vitrina'}</DialogTitle><DialogDescription>Enlace una publicación viral, un caso comentado o contenido educativo.</DialogDescription></DialogHeader><div className="mt-3 grid gap-5 sm:grid-cols-2"><FormField label="Plataforma"><select value={value.platform} onChange={(e) => update('platform', e.target.value)} className="h-8 rounded-lg border border-input px-2 text-sm"><option>TikTok</option><option>Instagram</option><option>Facebook</option><option>YouTube</option></select></FormField><FormField label="Categoría"><Input value={value.category} onChange={(e) => update('category', e.target.value)} /></FormField><div className="sm:col-span-2"><FormField label="Título"><Input value={value.title} onChange={(e) => update('title', e.target.value)} /></FormField></div><div className="sm:col-span-2"><FormField label="Enlace de la publicación"><Input type="url" value={value.url} onChange={(e) => update('url', e.target.value)} /></FormField></div><div className="sm:col-span-2"><FormField label="Descripción"><Textarea value={value.caption} onChange={(e) => update('caption', e.target.value)} /></FormField></div><div className="sm:col-span-2"><ImageUploader title="Portada de la publicación" url={value.thumbnailUrl} onFile={(file) => onUpload(file, 'thumbnailUrl')} /></div><FormField label="Orden"><Input type="number" value={value.displayOrder} onChange={(e) => update('displayOrder', Number(e.target.value))} /></FormField><label className="flex items-center justify-between rounded-xl border border-black/10 px-4 py-3 text-sm"><span>Publicado</span><Switch checked={value.active} onCheckedChange={(checked) => update('active', checked)} /></label></div><button onClick={() => onSave(value)} disabled={loading || !value.title || !value.url} className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#191713] px-5 text-sm font-semibold text-white disabled:opacity-40"><Save className="size-4" /> Guardar publicación</button></DialogContent></Dialog>; }
 

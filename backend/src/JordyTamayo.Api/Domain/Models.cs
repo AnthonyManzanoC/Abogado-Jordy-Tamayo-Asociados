@@ -22,6 +22,8 @@ public sealed class SiteProfile
     public string AddressLine2 { get; set; } = "Calle Sucre y Av. 5 de Junio";
     public string City { get; set; } = "Babahoyo, Los Ríos";
     public string GoogleMapsUrl { get; set; } = "https://maps.google.com/?q=Edificio+Alavama+Babahoyo";
+    public string GoogleMapsEmbedUrl { get; set; } = "https://www.google.com/maps?q=Edificio%20Alavama%20Babahoyo&output=embed";
+    public string OfficeBuildingImageUrl { get; set; } = "/images/jordy-tamayo-office.png";
     public string WhatsAppNumber { get; set; } = "";
     public string Email { get; set; } = "contacto@jordytamayo.ec";
     public string Phone { get; set; } = "";
@@ -43,6 +45,7 @@ public sealed class LegalService
     public string LongDescription { get; set; } = "";
     public string Icon { get; set; } = "Scale";
     public string Accent { get; set; } = "01";
+    public string[] GalleryImageUrls { get; set; } = [];
     public bool IsFeatured { get; set; }
     public int DisplayOrder { get; set; }
     public bool Active { get; set; } = true;
@@ -75,8 +78,26 @@ public sealed class Lead
     public DateOnly? PreferredDate { get; set; }
     public string Message { get; set; } = "";
     public string Status { get; set; } = "Nuevo";
+    public string TrackingToken { get; set; } = "";
+    public string AppointmentStatus { get; set; } = "Pendiente";
+    public string PaymentStatus { get; set; } = "No requerido";
+    public string PaymentProofUrl { get; set; } = "";
+    public string PaymentNotes { get; set; } = "";
+    public string PublicNotes { get; set; } = "";
     public string Source { get; set; } = "Web";
     public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+}
+
+public sealed class NotificationSettings
+{
+    public int Id { get; set; } = 1;
+    public bool Enabled { get; set; }
+    public string Provider { get; set; } = "Brevo";
+    public string AdminEmail { get; set; } = "janthonymc09@gmail.com";
+    public string SenderName { get; set; } = "Jordy Tamayo & Asociados";
+    public string SenderEmail { get; set; } = "janthonymc09@gmail.com";
+    public string BrevoApiKey { get; set; } = "";
     public DateTimeOffset UpdatedAt { get; set; }
 }
 
@@ -93,5 +114,10 @@ public sealed class AdminUser
 public sealed record PublicSiteResponse(SiteProfile Profile, IReadOnlyList<LegalService> Services, IReadOnlyList<MediaPost> MediaPosts);
 public sealed record LoginRequest(string Email, string Password);
 public sealed record LoginResponse(string Token, DateTimeOffset ExpiresAt, string Email);
-public sealed record CreateLeadRequest(string Name, string Whatsapp, string? Email, string LegalArea, string ConsultationType, DateOnly? PreferredDate, string Message);
+public sealed record CreateLeadRequest(string Name, string Whatsapp, string? Email, string LegalArea, string ConsultationType, DateOnly? PreferredDate, string Message, string? Source = null);
+public sealed record CreateLeadResponse(Guid Id, string TrackingToken, string TrackingUrl, string Status, string PaymentStatus, string Message);
+public sealed record LeadTrackingResponse(Guid Id, string TrackingToken, string Name, string LegalArea, string ConsultationType, DateOnly? PreferredDate, string Status, string AppointmentStatus, string PaymentStatus, string PaymentProofUrl, string PublicNotes, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt);
 public sealed record DashboardResponse(int TotalLeads, int NewLeads, int Services, int MediaPosts, IReadOnlyList<Lead> RecentLeads);
+public sealed record NotificationSettingsResponse(bool Enabled, string Provider, string AdminEmail, string SenderName, string SenderEmail, bool HasBrevoApiKey, DateTimeOffset UpdatedAt);
+public sealed record UpdateNotificationSettingsRequest(bool Enabled, string AdminEmail, string SenderName, string SenderEmail, string? BrevoApiKey);
+public sealed record TestNotificationRequest(string? Email);

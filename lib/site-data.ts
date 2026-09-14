@@ -19,6 +19,8 @@ export type SiteProfile = {
   addressLine2: string;
   city: string;
   googleMapsUrl: string;
+  googleMapsEmbedUrl: string;
+  officeBuildingImageUrl: string;
   whatsAppNumber: string;
   email: string;
   phone: string;
@@ -39,6 +41,7 @@ export type LegalService = {
   longDescription: string;
   icon: string;
   accent: string;
+  galleryImageUrls: string[];
   isFeatured: boolean;
   displayOrder: number;
   active: boolean;
@@ -66,12 +69,54 @@ export type Lead = {
   preferredDate?: string;
   message: string;
   status: string;
+  trackingToken: string;
+  appointmentStatus: string;
+  paymentStatus: string;
+  paymentProofUrl: string;
+  paymentNotes: string;
+  publicNotes: string;
   source: string;
   createdAt: string;
   updatedAt: string;
 };
 
 export type PublicSite = { profile: SiteProfile; services: LegalService[]; mediaPosts: MediaPost[] };
+
+export type CreateLeadResponse = {
+  id: string;
+  trackingToken: string;
+  trackingUrl: string;
+  status: string;
+  paymentStatus: string;
+  message: string;
+};
+
+export type LeadTracking = {
+  id: string;
+  trackingToken: string;
+  name: string;
+  legalArea: string;
+  consultationType: string;
+  preferredDate?: string;
+  status: string;
+  appointmentStatus: string;
+  paymentStatus: string;
+  paymentProofUrl: string;
+  publicNotes: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type NotificationSettings = {
+  enabled: boolean;
+  provider: string;
+  adminEmail: string;
+  senderName: string;
+  senderEmail: string;
+  hasBrevoApiKey: boolean;
+  brevoApiKey?: string;
+  updatedAt?: string;
+};
 
 export const defaultProfile: SiteProfile = {
   id: 1,
@@ -94,6 +139,8 @@ export const defaultProfile: SiteProfile = {
   addressLine2: 'Calle Sucre y Av. 5 de Junio',
   city: 'Babahoyo, Los Ríos',
   googleMapsUrl: 'https://maps.google.com/?q=Edificio+Alavama+Babahoyo',
+  googleMapsEmbedUrl: 'https://www.google.com/maps?q=Edificio%20Alavama%20Babahoyo&output=embed',
+  officeBuildingImageUrl: '/images/jordy-tamayo-office.png',
   whatsAppNumber: '',
   email: 'contacto@jordytamayo.ec',
   phone: '',
@@ -106,10 +153,10 @@ export const defaultProfile: SiteProfile = {
 };
 
 export const defaultServices: LegalService[] = [
-  { id: 'penal', slug: 'derecho-penal', name: 'Derecho penal', shortDescription: 'Defensa técnica, inmediata y estratégica en cada etapa del proceso.', longDescription: 'Acompañamiento integral desde la primera consulta, análisis de riesgos, diseño de la teoría del caso y representación durante todo el proceso penal.', icon: 'Shield', accent: '01', isFeatured: true, displayOrder: 1, active: true },
-  { id: 'familia', slug: 'derecho-familia', name: 'Familia', shortDescription: 'Soluciones humanas y firmes para decisiones que cambian la vida.', longDescription: 'Asesoría en divorcios, alimentos, tenencia, régimen de visitas y acuerdos familiares, con claridad jurídica y sensibilidad personal.', icon: 'Users', accent: '02', isFeatured: true, displayOrder: 2, active: true },
-  { id: 'civil', slug: 'derecho-civil', name: 'Civil y contratos', shortDescription: 'Prevención de conflictos y defensa de sus derechos patrimoniales.', longDescription: 'Redacción y revisión de contratos, obligaciones, cobros, propiedad y controversias civiles con una visión preventiva y práctica.', icon: 'FileText', accent: '03', isFeatured: true, displayOrder: 3, active: true },
-  { id: 'transito', slug: 'transito', name: 'Tránsito', shortDescription: 'Respuesta ágil ante accidentes, citaciones y procedimientos.', longDescription: 'Defensa y asesoría en infracciones, accidentes de tránsito, impugnaciones y procedimientos administrativos o judiciales.', icon: 'Car', accent: '04', isFeatured: true, displayOrder: 4, active: true },
+  { id: 'penal', slug: 'derecho-penal', name: 'Derecho penal', shortDescription: 'Defensa técnica, inmediata y estratégica en cada etapa del proceso.', longDescription: 'Acompañamiento integral desde la primera consulta, análisis de riesgos, diseño de la teoría del caso y representación durante todo el proceso penal.', icon: 'Shield', accent: '01', galleryImageUrls: ['/images/services/penal-1.svg', '/images/services/penal-2.svg', '/images/services/penal-3.svg', '/images/services/penal-4.svg'], isFeatured: true, displayOrder: 1, active: true },
+  { id: 'familia', slug: 'derecho-familia', name: 'Familia', shortDescription: 'Soluciones humanas y firmes para decisiones que cambian la vida.', longDescription: 'Asesoría en divorcios, alimentos, tenencia, régimen de visitas y acuerdos familiares, con claridad jurídica y sensibilidad personal.', icon: 'Users', accent: '02', galleryImageUrls: ['/images/services/familia-1.svg', '/images/services/familia-2.svg', '/images/services/familia-3.svg', '/images/services/familia-4.svg'], isFeatured: true, displayOrder: 2, active: true },
+  { id: 'civil', slug: 'derecho-civil', name: 'Civil y contratos', shortDescription: 'Prevención de conflictos y defensa de sus derechos patrimoniales.', longDescription: 'Redacción y revisión de contratos, obligaciones, cobros, propiedad y controversias civiles con una visión preventiva y práctica.', icon: 'FileText', accent: '03', galleryImageUrls: ['/images/services/civil-1.svg', '/images/services/civil-2.svg', '/images/services/civil-3.svg', '/images/services/civil-4.svg'], isFeatured: true, displayOrder: 3, active: true },
+  { id: 'transito', slug: 'transito', name: 'Tránsito', shortDescription: 'Respuesta ágil ante accidentes, citaciones y procedimientos.', longDescription: 'Defensa y asesoría en infracciones, accidentes de tránsito, impugnaciones y procedimientos administrativos o judiciales.', icon: 'Car', accent: '04', galleryImageUrls: ['/images/services/transito-1.svg', '/images/services/transito-2.svg', '/images/services/transito-3.svg', '/images/services/transito-4.svg'], isFeatured: true, displayOrder: 4, active: true },
 ];
 
 export const defaultMedia: MediaPost[] = [
@@ -119,3 +166,12 @@ export const defaultMedia: MediaPost[] = [
 ];
 
 export const defaultSite: PublicSite = { profile: defaultProfile, services: defaultServices, mediaPosts: defaultMedia };
+
+export const defaultNotificationSettings: NotificationSettings = {
+  enabled: false,
+  provider: 'Brevo',
+  adminEmail: 'janthonymc09@gmail.com',
+  senderName: 'Jordy Tamayo & Asociados',
+  senderEmail: 'janthonymc09@gmail.com',
+  hasBrevoApiKey: false,
+};

@@ -5,7 +5,7 @@ namespace JordyTamayo.Api.Features;
 
 public static class AdminEndpoints
 {
-    private static readonly HashSet<string> LeadStatuses = ["Nuevo", "Contactado", "Agendado", "Cerrado", "Archivado"];
+    private static readonly HashSet<string> LeadStatuses = ["Nuevo", "Pago pendiente", "Comprobante recibido", "Contactado", "Agendado", "Atendido", "Cerrado", "Archivado"];
 
     public static IEndpointRouteBuilder MapAdminEndpoints(this IEndpointRouteBuilder app)
     {
@@ -13,6 +13,23 @@ public static class AdminEndpoints
         group.MapGet("/dashboard", async (ContentRepository repository) => Results.Ok(await repository.GetDashboardAsync()));
         group.MapGet("/profile", async (ContentRepository repository) => Results.Ok(await repository.GetProfileAsync()));
         group.MapPut("/profile", async (SiteProfile profile, ContentRepository repository) => Results.Ok(await repository.UpdateProfileAsync(profile)));
+
+        group.MapGet("/notifications", async (ContentRepository repository) => ToNotificationResponse(await repository.GetNotificationSettingsAsync()));
+        group.MapPut("/notifications", async (UpdateNotificationSettingsRequest request, ContentRepository repository) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.AdminEmail) || string.IsNullOrWhiteSpace(request.SenderEmail))
+                return Results.BadRequest(new { message = "Correo del admin y remitente son obligatorios." });
+
+            var saved = await repository.UpdateNotificationSettingsAsync(request);
+            return Results.Ok(ToNotificationResponse(saved));
+        });
+        group.MapPost("/notifications/test", async (TestNotificationRequest request, LeadNotificationService notifications, HttpContext context) =>
+        {
+            var result = await notifications.SendTestAsync(request.Email, context.Request, context.RequestAborted);
+            return result.Delivered
+                ? Results.Ok(new { message = "Correo de prueba enviado correctamente." })
+                : Results.BadRequest(new { message = result.ErrorMessage });
+        });
 
         group.MapGet("/services", async (ContentRepository repository) => Results.Ok(await repository.GetAllServicesAsync()));
         group.MapPost("/services", async (LegalService service, ContentRepository repository) => Results.Ok(await repository.SaveServiceAsync(Normalize(service))));
@@ -41,11 +58,13 @@ public static class AdminEndpoints
         });
 
         group.MapGet("/leads", async (string? status, ContentRepository repository) => Results.Ok(await repository.GetLeadsAsync(status)));
-        group.MapPut("/leads/{id:guid}/status", async (Guid id, LeadStatusRequest request, ContentRepository repository) =>
+        group.MapPut("/leads/{id:guid}/status", async (Guid id, LeadStatusRequest request, ContentRepository repository, LeadNotificationService notifications, HttpContext context) =>
         {
             if (!LeadStatuses.Contains(request.Status)) return Results.BadRequest(new { message = "Estado inválido." });
-            var lead = await repository.UpdateLeadStatusAsync(id, request.Status);
-            return lead is null ? Results.NotFound() : Results.Ok(lead);
+            var lead = await repository.UpdateLeadStatusAsync(id, request.Status, request.PublicNotes);
+            if (lead is null) return Results.NotFound();
+            await notifications.NotifyLeadStatusChangedAsync(lead, context.Request, context.RequestAborted);
+            return Results.Ok(lead);
         });
 
         group.MapPost("/upload", async (IFormFile file, ContentRepository repository) =>
@@ -68,5 +87,14 @@ public static class AdminEndpoints
         return service;
     }
 
-    public sealed record LeadStatusRequest(string Status);
+    private static NotificationSettingsResponse ToNotificationResponse(NotificationSettings settings) => new(
+        settings.Enabled,
+        settings.Provider,
+        settings.AdminEmail,
+        settings.SenderName,
+        settings.SenderEmail,
+        !string.IsNullOrWhiteSpace(settings.BrevoApiKey),
+        settings.UpdatedAt);
+
+    public sealed record LeadStatusRequest(string Status, string? PublicNotes);
 }
