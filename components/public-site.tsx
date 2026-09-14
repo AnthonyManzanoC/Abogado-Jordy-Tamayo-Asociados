@@ -375,7 +375,7 @@ function SectionHeading({ kicker, title, copy }: { kicker: string; title: string
 function ServiceCard({ service }: { service: LegalService }) {
   const Icon = icons[service.icon] || Scale;
   return (
-    <a href={`/servicios/${service.slug}`} className="group relative flex min-h-[360px] flex-col overflow-hidden border-b border-r border-border bg-card p-7 transition duration-300 hover:-translate-y-1 hover:bg-[#181612] hover:text-white sm:p-8">
+    <a href={`/servicios/${service.slug}`} className="service-photo-card group relative flex min-h-[410px] flex-col overflow-hidden border-b border-r border-border bg-card p-7 transition duration-300 hover:-translate-y-1 hover:bg-[#181612] hover:text-white sm:p-8">
       <ServiceGalleryBackground service={service} className="opacity-0 transition duration-500 group-hover:opacity-100" />
       <div className="relative flex items-start justify-between"><span className="text-xs font-semibold text-[#a36d29] transition group-hover:text-[#d4a95d]">{service.accent}</span><Icon className="size-6 text-muted-foreground transition group-hover:text-[#d4a95d]" /></div>
       <div className="relative mt-auto"><h3 className="text-2xl font-semibold tracking-tight">{service.name}</h3><p className="mt-4 leading-6 text-muted-foreground transition group-hover:text-white/70">{service.shortDescription}</p><span className="mt-8 inline-flex items-center gap-2 text-sm font-semibold">Explorar servicio <ArrowUpRight className="size-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" /></span></div>

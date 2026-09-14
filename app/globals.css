@@ -109,6 +109,13 @@
 
 .animate-chat-in { animation: chat-in .25s cubic-bezier(.2,.8,.2,1) both; }
 
+.service-photo-card { color: white; background: #181612; }
+.service-photo-card .service-gallery-frame { opacity: 1; }
+.service-photo-card .text-muted-foreground { color: rgb(255 255 255 / .8); }
+.service-photo-card .text-\[\#a36d29\] { color: #e6bb70; }
+.service-photo-card .service-gallery-frame::after { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg, rgb(12 11 9 / .85), rgb(12 11 9 / .12) 85%); }
+.service-photo-card:focus-visible { outline: 3px solid #d4a95d; outline-offset: 3px; }
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }

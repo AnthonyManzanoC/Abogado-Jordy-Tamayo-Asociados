@@ -40,7 +40,7 @@ console.log('PASS: PWA manifest, icons and service worker');
 
 for (const family of ['penal', 'familia', 'civil', 'transito']) {
   for (const index of [1, 2, 3, 4]) {
-    await access(resolve(output, `static/images/services/${family}-${index}.svg`));
+    await access(resolve(output, `static/images/services/${family}-${index}.webp`));
   }
 }
 console.log('PASS: service carousel image assets');
