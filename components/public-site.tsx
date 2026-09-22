@@ -34,6 +34,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { API_BASE, apiFetch, assetUrl } from '@/lib/api';
 import { defaultSite, type CreateLeadResponse, type LegalService, type PublicSite } from '@/lib/site-data';
+import { ProfessionalGallery } from '@/components/professional-gallery';
 import { ServiceGalleryBackground } from '@/components/service-gallery';
 
 const icons: Record<string, LucideIcon> = { Shield, Users, FileText, Car, Scale, Landmark, BriefcaseBusiness };
@@ -155,13 +156,13 @@ export function PublicSite() {
             </div>
           </div>
 
-          <div className="relative mx-auto h-[520px] w-full max-w-[560px] self-end lg:h-[630px]">
+          <div className="relative mx-auto aspect-[2/3] w-full max-w-[500px] self-end">
             <div className="absolute -left-4 top-14 z-10 hidden rounded-2xl border border-white/15 bg-black/35 p-4 backdrop-blur-xl sm:block">
               <p className="text-[10px] uppercase tracking-[.22em] text-white/45">Enfoque</p>
               <p className="mt-1 text-sm font-medium">Soluciones que avanzan</p>
             </div>
             <div className="absolute inset-0 overflow-hidden rounded-t-[12rem] border border-white/12 bg-[#25211d]">
-              <img src={assetUrl(profile.heroImageUrl)} alt={profile.fullName} className="h-full w-full object-cover object-top" />
+              <img src={assetUrl(profile.heroImageUrl)} alt={profile.fullName} className="h-full w-full object-contain object-bottom" />
               <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#11100e] to-transparent" />
             </div>
           </div>
@@ -184,7 +185,7 @@ export function PublicSite() {
       <section id="trayectoria" className="bg-[#171512] py-24 text-white sm:py-32">
         <div className="mx-auto grid max-w-[1440px] gap-14 px-5 sm:px-8 lg:grid-cols-[.9fr_1.1fr] lg:px-12">
           <div className="relative min-h-[620px] overflow-hidden rounded-[2rem] bg-[#29241f]">
-            <img src={assetUrl(profile.degreeImageUrl)} alt="Trayectoria académica de Jordy Tamayo" className="absolute inset-0 h-full w-full object-cover" />
+            <img src={assetUrl(profile.degreeImageUrl)} alt="Trayectoria académica de Jordy Tamayo" className="absolute inset-0 h-full w-full object-contain" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 p-7 sm:p-10">
               <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-xs uppercase tracking-[.18em] backdrop-blur"><GraduationCap className="size-4 text-[#d4a95d]" /> Formación de cuarto nivel</span>
@@ -234,6 +235,7 @@ export function PublicSite() {
         </div>
       </section>
 
+      <ProfessionalGallery posts={mediaPosts} compact />
       <section id="vitrina" className="bg-background py-24 sm:py-32">
         <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
           <div className="flex flex-col justify-between gap-8 sm:flex-row sm:items-end">
@@ -241,7 +243,7 @@ export function PublicSite() {
             <a href="/vitrina-legal" className="group inline-flex shrink-0 items-center gap-2 text-sm font-semibold">Explorar toda la vitrina <ArrowUpRight className="size-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" /></a>
           </div>
           <div className="mt-14 grid gap-5 lg:grid-cols-3">
-            {mediaPosts.map((post, index) => (
+            {mediaPosts.filter((post) => post.platform !== 'Fotografía').map((post, index) => (
               <a key={post.id} href={post.url} target="_blank" rel="noreferrer" className={`group relative overflow-hidden rounded-[1.8rem] bg-[#181612] text-white ${index === 0 ? 'lg:row-span-2 lg:min-h-[650px]' : 'min-h-[310px]'}`}>
                 <img src={assetUrl(post.thumbnailUrl)} alt="" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.035]" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/5" />

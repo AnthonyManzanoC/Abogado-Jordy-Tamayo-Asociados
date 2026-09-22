@@ -147,8 +147,8 @@ export const defaultProfile: SiteProfile = {
   tikTokUrl: 'https://www.tiktok.com/@jordytamayo',
   instagramUrl: 'https://www.instagram.com/jordytamayo28',
   facebookUrl: 'https://www.facebook.com/share/19PQUeXhoj/',
-  heroImageUrl: '/images/jordy-tamayo-hero.png',
-  portraitImageUrl: '/images/jordy-tamayo-office.png',
+  heroImageUrl: '/images/trayectoria/principal.webp',
+  portraitImageUrl: '/images/trayectoria/despacho.webp',
   degreeImageUrl: '/images/jordy-tamayo-maestria.png',
 };
 
@@ -165,7 +165,23 @@ export const defaultMedia: MediaPost[] = [
   { id: 'facebook', platform: 'Facebook', title: 'Actualidad jurídica', url: 'https://www.facebook.com/share/19PQUeXhoj/', thumbnailUrl: '/images/jordy-tamayo-maestria.png', caption: 'Información útil y contacto directo con la comunidad de Babahoyo.', category: 'Actualidad', displayOrder: 3, active: true },
 ];
 
-export const defaultSite: PublicSite = { profile: defaultProfile, services: defaultServices, mediaPosts: defaultMedia };
+const professionalPhotos: MediaPost[] = [
+  ['estudio', 'La estrategia empieza aquí', 'Práctica profesional'],
+  ['despacho', 'Una atención cercana', 'El despacho'],
+  ['ceremonia', 'Un paso más en la formación', 'Formación académica'],
+  ['asamblea', 'Una mirada institucional', 'Trayectoria'],
+  ['graduacion', 'Formación compartida', 'Formación académica'],
+  ['posgrado', 'El valor de seguir aprendiendo', 'Formación académica'],
+  ['cercania', 'El lado humano del despacho', 'El despacho'],
+  ['territorio', 'Presencia en territorio', 'Práctica profesional'],
+  ['encuentro', 'Momentos de una trayectoria', 'Trayectoria'],
+  ['archivo-5504', 'Una meta cumplida', 'Formación académica'],
+  ['archivo-5428', 'Recuerdos de posgrado', 'Formación académica'],
+  ['archivo-7422', 'Ejercicio profesional', 'Práctica profesional'],
+  ['archivo-6814', 'Desde el despacho', 'El despacho'],
+].map(([file, title, category], index) => ({ id: `photo-${file}`, platform: 'Fotografía', title, category, caption: '', url: `/images/trayectoria/${file}.webp`, thumbnailUrl: `/images/trayectoria/${file}.webp`, displayOrder: index + 1, active: true }));
+
+export const defaultSite: PublicSite = { profile: defaultProfile, services: defaultServices, mediaPosts: [...defaultMedia, ...professionalPhotos] };
 
 export const defaultNotificationSettings: NotificationSettings = {
   enabled: false,

@@ -13,9 +13,9 @@ export function VitrinaPage() {
   const [query, setQuery] = useState('');
   useEffect(() => { apiFetch<PublicSite>('/api/public/site').then(setSite).catch(() => undefined); }, []);
 
-  const platforms = useMemo(() => ['Todos', ...Array.from(new Set(site.mediaPosts.map((post) => post.platform)))], [site.mediaPosts]);
+  const platforms = useMemo(() => ['Todos', ...Array.from(new Set(site.mediaPosts.filter((post) => post.platform !== 'Fotografía').map((post) => post.platform)))], [site.mediaPosts]);
   const filtered = useMemo(() => site.mediaPosts.filter((post) => {
-    const byPlatform = platform === 'Todos' || post.platform === platform;
+    const byPlatform = post.platform !== 'Fotografía' && (platform === 'Todos' || post.platform === platform);
     const haystack = `${post.title} ${post.caption} ${post.category}`.toLowerCase();
     return byPlatform && haystack.includes(query.toLowerCase());
   }), [site.mediaPosts, platform, query]);
