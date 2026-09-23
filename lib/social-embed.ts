@@ -1,11 +1,11 @@
 export function getSocialEmbedUrl(url: string): string | null {
   try {
     const parsed = new URL(url);
-    if (parsed.hostname.includes('tiktok.com')) {
+    if (parsed.hostname === 'tiktok.com' || parsed.hostname.endsWith('.tiktok.com')) {
       const match = parsed.pathname.match(/\/video\/(\d+)/);
       return match ? `https://www.tiktok.com/player/v1/${match[1]}?autoplay=0&loop=0` : null;
     }
-    if (parsed.hostname.includes('instagram.com')) {
+    if (parsed.hostname === 'instagram.com' || parsed.hostname.endsWith('.instagram.com')) {
       const match = parsed.pathname.match(/\/(p|reel|tv)\/([^/]+)/);
       return match ? `https://www.instagram.com/${match[1]}/${match[2]}/embed/` : null;
     }

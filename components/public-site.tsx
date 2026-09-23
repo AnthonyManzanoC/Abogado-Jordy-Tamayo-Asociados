@@ -1,4 +1,5 @@
 'use client';
+import { EditorialShowcase } from '@/components/editorial-showcase';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import {
@@ -242,23 +243,7 @@ export function PublicSite() {
             <SectionHeading kicker="Vitrina legal" title="El derecho también se conversa." copy="Casos, actualidad y respuestas jurídicas compartidas con una comunidad activa." />
             <a href="/vitrina-legal" className="group inline-flex shrink-0 items-center gap-2 text-sm font-semibold">Explorar toda la vitrina <ArrowUpRight className="size-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" /></a>
           </div>
-          <div className="mt-14 grid gap-5 lg:grid-cols-3">
-            {mediaPosts.filter((post) => post.platform !== 'Fotografía').map((post, index) => (
-              <a key={post.id} href={post.url} target="_blank" rel="noreferrer" className={`group relative overflow-hidden rounded-[1.8rem] bg-[#181612] text-white ${index === 0 ? 'lg:row-span-2 lg:min-h-[650px]' : 'min-h-[310px]'}`}>
-                <img src={assetUrl(post.thumbnailUrl)} alt="" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.035]" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/5" />
-                <div className="absolute left-5 top-5 flex items-center gap-2 rounded-full border border-white/20 bg-black/20 px-3 py-2 text-[10px] font-semibold uppercase tracking-[.18em] backdrop-blur">
-                  <Play className="size-3 fill-current" /> {post.platform}
-                </div>
-                <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8">
-                  <span className="text-[10px] uppercase tracking-[.2em] text-[#e0b56c]">{post.category}</span>
-                  <h3 className="mt-3 max-w-md text-2xl font-semibold leading-tight">{post.title}</h3>
-                  <p className="mt-3 max-w-md text-sm leading-6 text-white/58">{post.caption}</p>
-                  <span className="mt-5 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[.14em]">Ver publicación <ArrowUpRight className="size-3.5" /></span>
-                </div>
-              </a>
-            ))}
-          </div>
+          <EditorialShowcase posts={mediaPosts} />
         </div>
       </section>
 

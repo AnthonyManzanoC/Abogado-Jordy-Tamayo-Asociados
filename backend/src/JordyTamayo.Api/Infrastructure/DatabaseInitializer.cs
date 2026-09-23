@@ -59,9 +59,9 @@ public static class DatabaseInitializer
 
         var media = new[]
         {
-            new { Id = Guid.NewGuid(), Platform = "TikTok", Title = "Criterio legal en lenguaje claro", Url = "https://www.tiktok.com/@jordytamayo", Thumb = "/images/jordy-tamayo-hero.png", Caption = "Análisis, actualidad y educación jurídica para una comunidad de más de 200K personas.", Category = "Comunidad", Order = 1 },
-            new { Id = Guid.NewGuid(), Platform = "Instagram", Title = "Detrás de cada caso", Url = "https://www.instagram.com/jordytamayo28", Thumb = "/images/jordy-tamayo-office.png", Caption = "Contenido profesional, experiencias y una mirada cercana a la práctica del derecho.", Category = "Práctica legal", Order = 2 },
-            new { Id = Guid.NewGuid(), Platform = "Facebook", Title = "Actualidad jurídica", Url = "https://www.facebook.com/share/19PQUeXhoj/", Thumb = "/images/jordy-tamayo-maestria.png", Caption = "Información útil y contacto directo con la comunidad de Babahoyo.", Category = "Actualidad", Order = 3 }
+            new { Id = Guid.NewGuid(), Platform = "TikTok", Title = "Defender derechos. Perseverar hasta el final.", Url = "https://www.tiktok.com/@jordytamayo/video/7673717461102906644", Thumb = "", Caption = "Jordy comparte su experiencia en una acción de protección: preparación, perseverancia y compromiso con los derechos de su clienta.", Category = "Defensa de derechos", Order = 1 },
+            new { Id = Guid.NewGuid(), Platform = "TikTok", Title = "La confianza también construye justicia.", Url = "https://www.tiktok.com/@jordytamayo/video/7677776683931340052", Thumb = "", Caption = "Un agradecimiento a quienes confían en el despacho y una invitación a conversar sobre sus inquietudes.", Category = "Comunidad", Order = 2 },
+            new { Id = Guid.NewGuid(), Platform = "TikTok", Title = "La vocación va más allá de un caso.", Url = "https://www.tiktok.com/@jordytamayo/video/7688151810992852245", Thumb = "", Caption = "Una mirada cercana a la vocación de servicio y al compromiso de acompañar a su gente.", Category = "Vocación", Order = 3 }
         };
         foreach (var item in media)
         {

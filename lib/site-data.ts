@@ -160,9 +160,9 @@ export const defaultServices: LegalService[] = [
 ];
 
 export const defaultMedia: MediaPost[] = [
-  { id: 'tiktok', platform: 'TikTok', title: 'Criterio legal en lenguaje claro', url: 'https://www.tiktok.com/@jordytamayo', thumbnailUrl: '/images/jordy-tamayo-hero.png', caption: 'Análisis, actualidad y educación jurídica para una comunidad de más de 200K personas.', category: 'Comunidad', displayOrder: 1, active: true },
-  { id: 'instagram', platform: 'Instagram', title: 'Detrás de cada caso', url: 'https://www.instagram.com/jordytamayo28', thumbnailUrl: '/images/jordy-tamayo-office.png', caption: 'Contenido profesional, experiencias y una mirada cercana a la práctica del derecho.', category: 'Práctica legal', displayOrder: 2, active: true },
-  { id: 'facebook', platform: 'Facebook', title: 'Actualidad jurídica', url: 'https://www.facebook.com/share/19PQUeXhoj/', thumbnailUrl: '/images/jordy-tamayo-maestria.png', caption: 'Información útil y contacto directo con la comunidad de Babahoyo.', category: 'Actualidad', displayOrder: 3, active: true },
+  { id: '7673717461102906644', platform: 'TikTok', title: 'Defender derechos. Perseverar hasta el final.', url: 'https://www.tiktok.com/@jordytamayo/video/7673717461102906644', thumbnailUrl: '', caption: 'Jordy comparte su experiencia en una acción de protección: preparación, perseverancia y compromiso con los derechos de su clienta.', category: 'Defensa de derechos', displayOrder: 1, active: true },
+  { id: '7677776683931340052', platform: 'TikTok', title: 'La confianza también construye justicia.', url: 'https://www.tiktok.com/@jordytamayo/video/7677776683931340052', thumbnailUrl: '', caption: 'Un agradecimiento a quienes confían en el despacho y una invitación a conversar sobre sus inquietudes.', category: 'Comunidad', displayOrder: 2, active: true },
+  { id: '7688151810992852245', platform: 'TikTok', title: 'La vocación va más allá de un caso.', url: 'https://www.tiktok.com/@jordytamayo/video/7688151810992852245', thumbnailUrl: '', caption: 'Una mirada cercana a la vocación de servicio y al compromiso de acompañar a su gente.', category: 'Vocación', displayOrder: 3, active: true },
 ];
 
 const professionalPhotos: MediaPost[] = [
