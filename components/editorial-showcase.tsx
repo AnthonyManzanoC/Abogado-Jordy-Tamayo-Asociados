@@ -15,7 +15,6 @@ export function EditorialShowcase({ posts }: { posts: MediaPost[] }) {
   const [muted, setMuted] = useState(false);
   const [audioBlocked, setAudioBlocked] = useState(false);
   const soundWanted = useRef(true);
-  const fallbackAttempted = useRef(false);
   const command = (type: string) => frame.current?.contentWindow?.postMessage({ type, 'x-tiktok-player': true }, 'https://www.tiktok.com');
   const section = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLIFrameElement>(null);
@@ -37,19 +36,15 @@ export function EditorialShowcase({ posts }: { posts: MediaPost[] }) {
     const receive = (event: MessageEvent) => {
       if (event.origin !== 'https://www.tiktok.com' || event.source !== frame.current?.contentWindow || !event.data?.['x-tiktok-player']) return;
       if (event.data.type === 'onPlayerReady' && playing) {
-        fallbackAttempted.current = false;
+        setAudioBlocked(false);
         command(soundWanted.current ? 'unMute' : 'mute');
         command('play');
       }
       if (event.data.type === 'onMute') setMuted(Boolean(event.data.value));
       if (event.data.type === 'onPlayerError' && event.data.value?.errorCode === 3002) {
         setAudioBlocked(true);
-        setMuted(true);
-        if (!fallbackAttempted.current) {
-          fallbackAttempted.current = true;
-          command('mute');
-          command('play');
-        }
+        // Never silently downgrade to muted autoplay: wait for a user gesture.
+        command('pause');
         return;
       }
       if (event.data.type === 'onStateChange' && event.data.value === 0 && playing) {
